@@ -1,3 +1,5 @@
+% testing github
+
 % This code implements the simulated mixture of Gaussians for testing
 % EPESS. The code has the following sections:
 %
