@@ -1,5 +1,3 @@
-% testing github
-
 % This code implements the simulated mixture of Gaussians for testing
 % EPESS. The code has the following sections:
 %
@@ -14,6 +12,8 @@
 % 3. Perform ESS given the EP approximation
 %
 % 4. Plot distributions (if 2 dimensional)
+%
+% 5. Calculate convergence Diagnostics and Effective Sample Size
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -22,22 +22,22 @@
 
 % Hyperparameters that are constant for all alphas, dimensions,...
 axis_interval = 10;  % Maximum distance of the mean of a simulated gaussian from the origin
-number_mixtures = 3;
-number_samples = 2000; % Eventually use 10000
+number_mixtures = 5;
+number_samples = 1000; % Eventually use 10000
 number_examples = 1; % 20
-number_chains = 4; %4
+number_chains = 1; %4
 inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
 normal_true_student_t_false = true; % True if using normal, false if using student's t
 students_t_df = 0.5; % The degrees of freedom of the student's t
 min_distance_between_simulated_means = axis_interval/(number_mixtures+1); % This ensures that the balls centered on the mean can easy sit in the space
 
 % Hyperparameters for plotting
-plotting_on_off = false; % True if plotting, false otherwise
+plotting_on_off = true; % True if plotting, false otherwise
 plot_axis_interval = 1.5*axis_interval; % The radius of the plot. Made larger than the radius of the mixture means so that can show what happens for a gaussian that sits on the boundary
-grid_size = 50; % Number of points to plot along each axis
+grid_size = 150; % Number of points to plot along each axis
 
 % Hyperparameters that change
-alphas = [1, 2, 4, 6]; % [0.5,1,2,5,10,20]
+alphas = [0.5, 1, 2, 5]; % [0.5,1,2,5,10,20]
 dimensions = [2]; % [2,10,50,100]
 
 % Effective Sample Size
@@ -51,7 +51,8 @@ for dimension_index = 1:length(dimensions)
     inverse_wishart_df = dimension + 1.5; % Degrees of freedom of the inverse wishart
     
     for example_index = 1:number_examples
-        example
+        %%
+        example_index
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % 1. Simulate the mixture of Gaussians
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -96,7 +97,7 @@ for dimension_index = 1:length(dimensions)
             figure('units','normalized','outerposition',[0 0 1 1]) % Make figure take up the whole screen
         end
 
-
+        %%
         for alpha_index = 1:length(alphas)
 
             % Select the current alpha
@@ -205,29 +206,18 @@ for dimension_index = 1:length(dimensions)
             % 5. Convergence Diagnostics and Effective Sample Size
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-           
             [neff(dimension_index, alpha_index, example_index)] = mpsrf(samples);
-
             
         end
     end
-    
-         
 end
 
 %% Effective Sample Size averaged across all examples
-neff_avg = zeros(length(dimensions), length(alphas));
-neff_std = zeros(length(dimensions), length(alphas));
-for dimension_index = 1:length(dimensions)
-    
-    for alpha_index = 1:length(alphas)
+neff_mean = mean(neff(:, :, :),3)
+neff_std = std(neff(:, :, :),0,3)
+neff_median = median(neff(:, :, :),3)
+neff_max = max(neff(:, :, :),[],3)
+neff_min = min(neff(:, :, :),[],3)
 
-         neff_avg(dimension_index, alpha_index) = mean(neff(dimension_index, alpha_index, :));
-         neff_std(dimension_index, alpha_index) = std(neff(dimension_index, alpha_index, :));
-            
-    end
-    
-end
-           
- 
+
 
