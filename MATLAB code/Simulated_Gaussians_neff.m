@@ -21,11 +21,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hyperparameters that are constant for all alphas, dimensions,...
-axis_interval = 10;  % Maximum distance of the mean of a simulated gaussian from the origin
-number_mixtures = 5;
-number_samples = 1000; % Eventually use 10000
+axis_interval = 15;  % Maximum distance of the mean of a simulated gaussian from the origin
+number_mixtures = 2;
+number_samples = 2000; % Eventually use 10000
 number_examples = 1; % 20
-number_chains = 1; %4
+number_chains = 4; %4
 inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
 normal_true_student_t_false = true; % True if using normal, false if using student's t
 students_t_df = 0.5; % The degrees of freedom of the student's t
@@ -37,11 +37,12 @@ plot_axis_interval = 1.5*axis_interval; % The radius of the plot. Made larger th
 grid_size = 150; % Number of points to plot along each axis
 
 % Hyperparameters that change
-alphas = [0.5, 1, 2, 5]; % [0.5,1,2,5,10,20]
+alphas = [1]; % [0.5,1,2,5,10,20]
 dimensions = [2]; % [2,10,50,100]
 
 % Effective Sample Size
 neff = zeros(length(dimensions), length(alphas), number_examples);
+neff_hmc = zeros(length(dimensions), number_examples);
 
 %% 
 
@@ -131,7 +132,7 @@ for dimension_index = 1:length(dimensions)
 
             EP_covariance = EP_covariance - EP_mean' * EP_mean;
 
-
+         
             %% 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % 3. Perform ESS given the EP approximation
@@ -163,9 +164,27 @@ for dimension_index = 1:length(dimensions)
                 
             end
 
+            %%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % 4. Convergence Diagnostics and Effective Sample Size for ESS
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %% Need to look at this again
+            % This is done because HMC gives only the 2nd half of each chain. 
+            % To make a fair comparison, we discars the first half of each
+            % chain from EP-ESS too. Both are then passed to Aki's code.
+            % samples_truncated = samples(number_samples/2+1:number_samples , dimension, number_chains);
+            
+          
+            
+            [neff(dimension_index, alpha_index, example_index)] = mpsrf(samples);
+            
+            
+            
+            
+            
             %% 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % 4. Plot distributions (if 2 dimensional)
+            % 5. Plot distributions (if 2 dimensional)
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             if plotting_on_off & dimension == 2
@@ -201,15 +220,52 @@ for dimension_index = 1:length(dimensions)
                 % trace plots
             end
             
-            %%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % 5. Convergence Diagnostics and Effective Sample Size
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            
-            [neff(dimension_index, alpha_index, example_index)] = mpsrf(samples);
+           
             
         end
+        
+        
+            %% 
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % 6.HMC Comparison
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            dimension_sq = dimension*dimension;
+            mix_cov=reshape(mixture_covariances, [dimension_sq  number_mixtures]);
+            %neff_hmc(dimension_index, example_index)=stan_hmc(number_mixtures,dimension,mixture_weights,mixture_means,mixture_covariances,number_chains,number_samples);
+
+           
+            [neff_hmc(dimension_index, example_index), sims]=stan_hmc(number_mixtures,dimension,mixture_weights,mixture_means,mix_cov,number_chains,number_samples);
+
+            %% 
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % 7. Plotting HMC vs reults for a given alpha
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            if dimension == 2
+
+                %%%%%%%%%% Plot results of EP-ESS vs HMC %%%%%%%%%%
+% 
+%                 subplot(length(alphas),3,3 + 3*(alpha_index-1));
+%                 plot(samples(:,1)+EP_mean(1), samples(:,2)+EP_mean(2), 'x')
+%                 axis([-plot_axis_interval plot_axis_interval -plot_axis_interval plot_axis_interval])
+%                 title(['ESS samples for alpha = ',num2str(alpha)])
+                
+                % subplot(length(alphas),3,3 + 3*(alpha_index-1));
+                figure
+                plot(sims(:, 1), sims(:, 2), 'x')
+                hold on 
+                ezcontour(@(x,y)(mixture_pdf([x,y])) , [-plot_axis_interval , plot_axis_interval] , grid_size)
+                             
+                axis([-plot_axis_interval plot_axis_interval -plot_axis_interval plot_axis_interval])
+                title('HMC Samples')
+
+                
+                
+                % trace plots
+            end
+            
     end
+     
 end
 
 %% Effective Sample Size averaged across all examples
@@ -218,6 +274,6 @@ neff_std = std(neff(:, :, :),0,3)
 neff_median = median(neff(:, :, :),3)
 neff_max = max(neff(:, :, :),[],3)
 neff_min = min(neff(:, :, :),[],3)
-
+neff_hmc
 
 
