@@ -138,7 +138,7 @@ for dimension_index = 1:length(dimensions)
             mix_cov=reshape(mixture_covariances, [dimension_sq  number_mixtures]);
             %neff_hmc(dimension_index, example_index)=stan_hmc(number_mixtures,dimension,mixture_weights,mixture_means,mixture_covariances,number_chains,number_samples);
 
-            [neff_hmc(dimension_index, example_index), sims]=stan_hmc(number_mixtures,dimension,mixture_weights,mixture_means,mix_cov,number_chains,number_samples);
+            [neff_hmc(dimension_index, example_index), sims]=stanHmc(number_mixtures,dimension,mixture_weights,mixture_means,mix_cov,number_chains,number_samples);
             % neff_hmc
                 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
