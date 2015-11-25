@@ -52,7 +52,7 @@ neff = zeros(length(dimensions), number_examples); % We will average over the ex
 % neff_hmc = zeros(length(dimensions), number_examples);
 
 
-
+addpath([pwd,'/epmgp'])
 
 for dimension_index = 1:length(dimensions)
     
