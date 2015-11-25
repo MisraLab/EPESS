@@ -79,7 +79,7 @@ for dimension_index = 1:length(dimensions)
                 % 3. Perform ESS given the EP approximation
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-                [ samples, number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, axis_interval, logLikelihood, EP_mean, EP_chol );
+                [ samples, number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol );
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 4. Convergence Diagnostics and Effective Sample Size for ESS

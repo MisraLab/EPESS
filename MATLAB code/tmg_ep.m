@@ -25,7 +25,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hyperparameters that are constant for all alphas, dimensions,...
-number_samples = 1000; % Eventually use 10000
+number_samples = 100; % Eventually use 10000
 number_examples = 1; % 20
 number_chains = 4; %4
 
@@ -45,14 +45,16 @@ plotting_on_off = true; % True if plotting, false otherwise
 plot_axis_interval = 1.5*(axis_interval+distance_box_placement); % The radius of the plot. Made larger than the radius of the mixture means so that can show what happens for a gaussian that sits on the boundary
 grid_size = 100; % Number of points to plot along each axis
 
-
+% Boundaries
+lB = [150; -1];    
+uB = [151;1];
 
 % Effective Sample Size
 neff = zeros(length(dimensions), number_examples); % We will average over the examples
 % neff_hmc = zeros(length(dimensions), number_examples);
 
 
-addpath([pwd,'/epmgp'])
+% addpath([pwd,'/epmgp'])
 
 for dimension_index = 1:length(dimensions)
     
@@ -68,53 +70,51 @@ for dimension_index = 1:length(dimensions)
                 % 1. Simulate a gaussian and specify the trauncation box (randomly)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-                
-                [mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_interval, distance_box_placement, inverse_wishart_df);
-                
+                [mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_interval, distance_box_placement, inverse_wishart_df, lB, uB);
+                logLikelihood = @(x)( logPdfTmg( x, mu, chol_Sigma, C, lB, uB ));
              
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 2. Calculate the EP-approximation
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
 %               [logZ, mu_ep , Sigma_ep] = epmgp(mu,Sigma,C,lB,uB);
-                [logZ, mu_ep , Sigma_ep] = axisepmgp(mu,Sigma,lB,uB);
-                
-               % Sigma_ep = Sigma_ep;
-
-%                Sigma_ep = eye(2);
-                chol_ep = chol(Sigma_ep);
+                [logZ, EP_mean , EP_covariance] = axisepmgp(mu,Sigma,lB,uB);
+                EP_mean = EP_mean';
+                EP_chol = chol(EP_covariance);
                                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 3. Perform ESS given the EP approximation
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+                [ samples, number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol );
+                
 %                 % Function for shifted pseduo-likelihood (the shift is so that the prior can be centered at zero)
 %                 pseudoLogLikelihoodShifted = @(x)( logMixturePdfFn(x+EP_mean, number_mixtures, mixture_weights, mixture_means, mixture_chol ) ...
 %                                                       - logGaussPdfChol(x', mu_ep, chol(Sigma_ep)));
 
 
-                % Density at point x
-                lB = lB-mu_ep;
-                uB = uB-mu_ep;
-                pseudoLogLikelihood = @(x)(logPdfTmg(x, mu-mu_ep, chol_Sigma, C, lB, uB) - logGaussPdfChol(x' , zeros(dimension,1), chol_ep));
-                
-                
-                samples = zeros(number_samples , dimension, number_chains);
-                for chain_index = 1:number_chains
-
-                    % Initialize
-                    current_sample = ((lB+uB)/2)';
-                    samples(1,:,chain_index) = current_sample;
-                    cur_log_like = pseudoLogLikelihood(current_sample);
-                    number_fn_evaluations = 1;
-                    current_number_fn_evaluations = 0;
-
-                    % Run MCMC
-                    for sample_index = 2 : number_samples
-                        [samples(sample_index,:,chain_index), cur_log_like , current_number_fn_evaluations] = elliptical_slice( samples(sample_index-1,:,chain_index) , chol_ep, pseudoLogLikelihood, cur_log_like);
-                        number_fn_evaluations = number_fn_evaluations + current_number_fn_evaluations;
-                    end
-                end
+%                 % Density at point x
+%                 lB = lB-mu_ep;
+%                 uB = uB-mu_ep;
+%                 pseudoLogLikelihood = @(x)(logPdfTmg(x, mu-mu_ep, chol_Sigma, C, lB, uB) - logGaussPdfChol(x' , zeros(dimension,1), chol_ep));
+%                 
+%                 
+%                 samples = zeros(number_samples , dimension, number_chains);
+%                 for chain_index = 1:number_chains
+% 
+%                     % Initialize
+%                     current_sample = ((lB+uB)/2)';
+%                     samples(1,:,chain_index) = current_sample;
+%                     cur_log_like = pseudoLogLikelihood(current_sample);
+%                     number_fn_evaluations = 1;
+%                     current_number_fn_evaluations = 0;
+% 
+%                     % Run MCMC
+%                     for sample_index = 2 : number_samples
+%                         [samples(sample_index,:,chain_index), cur_log_like , current_number_fn_evaluations] = elliptical_slice( samples(sample_index-1,:,chain_index) , chol_ep, pseudoLogLikelihood, cur_log_like);
+%                         number_fn_evaluations = number_fn_evaluations + current_number_fn_evaluations;
+%                     end
+%                 end
                 
 %                 subplot(1,2,1);
 %                 ezmesh(@(x,y)(pseudoLogLikelihood([x,y])), [-plot_axis_interval , plot_axis_interval] , grid_size)
@@ -122,12 +122,11 @@ for dimension_index = 1:length(dimensions)
 % %  
 %                 subplot(1,2,2);
 
-                plot(samples(:,1)+mu_ep(1), samples(:,2)+mu_ep(2), 'x')
+                plot(samples(:,1), samples(:,2), 'x')
                 hold on 
-                ezcontour(@(x,y)(mvnpdf([x;y], mu_ep, Sigma_ep)) , [9 , 12, -2,2] , grid_size)            
-                axis([9 , 12, -2,2])
+                ezcontour(@(x,y)(mvnpdf([x;y], mu_ep, Sigma_ep)) , [lB(1) , uB(1), lB(2), uB(2)] , grid_size)            
+                axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('EP-ESS Samples')
- 
                 
     end
                 
