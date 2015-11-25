@@ -32,7 +32,8 @@ function plotSimulatedGaussianEPESS( plotting_on_off, dimension, alphas, alpha_i
         %%%%%%%%%% Plot results of EP-ESS %%%%%%%%%%
 
         subplot(length(alphas),3,3 + 3*(alpha_index-1));
-        plot(samples(:,1)+EP_mean(1), samples(:,2)+EP_mean(2), 'x')
+        %plot(samples(:,1)+EP_mean(1), samples(:,2)+EP_mean(2), 'x')
+        plot(samples(:,1), samples(:,2), 'x')
         axis([-plot_axis_interval plot_axis_interval -plot_axis_interval plot_axis_interval])
         title(['ESS samples for alpha = ',num2str(alpha)])
 

@@ -1,4 +1,4 @@
-function [ EP_mixture_weights, EP_mean, EP_covariance, EP_chol ] = EP_approximation( number_mixtures, dimension, alpha, mixture_weights, mixture_means, mixture_covariances )
+function [ EP_mean, EP_covariance, EP_chol ] = ep_approximation( number_mixtures, dimension, alpha, mixture_weights, mixture_means, mixture_covariances )
 %Calculates EP approximation
 %   Detailed explanation goes here
 
@@ -29,6 +29,6 @@ function [ EP_mixture_weights, EP_mean, EP_covariance, EP_chol ] = EP_approximat
 
     % EP choleski
     EP_chol = chol(EP_covariance);
-
+    
 end
 

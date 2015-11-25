@@ -22,7 +22,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hyperparameters that are constant for all alphas, dimensions,...
-number_mixtures = 3;
+number_mixtures = 4;
 number_samples = 1000; % Eventually use 10000
 number_examples = 1; % 20
 number_chains = 4; %4
@@ -39,7 +39,7 @@ run_hmc = false;
 % Hyperparameters for plotting
 plotting_on_off = true; % True if plotting, false otherwise
 plot_axis_interval = 1.5*axis_interval; % The radius of the plot. Made larger than the radius of the mixture means so that can show what happens for a gaussian that sits on the boundary
-grid_size = 100; % Number of points to plot along each axis
+grid_size = 150; % Number of points to plot along each axis
 
 % Hyperparameters that change
 alphas = [0.5,2]; % [0.5,1,2,5,10,20]
@@ -63,7 +63,8 @@ for dimension_index = 1:length(dimensions)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         [ mixture_weights, mixture_means, mixture_covariances, mixture_chol ] = simulateMixture( number_mixtures, dimension, axis_interval, min_distance_between_simulated_means, inverse_wishart_weight, inverse_wishart_df );
-        
+        logLikelihood = @(x)( logMixturePdfFn(x, number_mixtures, mixture_weights, mixture_means, mixture_chol ));
+                
         if run_epess
             for alpha_index = 1:length(alphas)
                 alpha = alphas(alpha_index); % Select the current alpha
@@ -72,32 +73,13 @@ for dimension_index = 1:length(dimensions)
                 % 2. Calculate the EP-approximation
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                [ EP_mixture_weights, EP_mean, EP_covariance, EP_chol ] = EpApproximation( number_mixtures, dimension, alpha, mixture_weights, mixture_means, mixture_covariances );
-                
+                [ EP_mean, EP_covariance, EP_chol ] = epApproximation( number_mixtures, dimension, alpha, mixture_weights, mixture_means, mixture_covariances );
+    
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 3. Perform ESS given the EP approximation
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-                % Function for shifted pseduo-likelihood (the shift is so that the prior can be centered at zero)
-                pseudoLogLikelihoodShifted = @(x)( logMixturePdfFn(x+EP_mean, number_mixtures, mixture_weights, mixture_means, mixture_chol ) ...
-                                                      - logGaussPdfChol(x', zeros(dimension,1), EP_chol));
-
-                samples = zeros(number_samples , dimension, number_chains);
-                for chain_index = 1:number_chains
-
-                    % Initialize
-                    current_sample = axis_interval*(2*rand(1,dimension)-1);
-                    samples(1,:,chain_index) = current_sample;
-                    cur_log_like = pseudoLogLikelihoodShifted(current_sample);
-                    number_fn_evaluations = 1;
-                    current_number_fn_evaluations = 0;
-
-                    % Run MCMC
-                    for sample_index = 2 : number_samples
-                        [samples(sample_index,:,chain_index), cur_log_like , current_number_fn_evaluations] = elliptical_slice( samples(sample_index-1,:,chain_index) , EP_chol, pseudoLogLikelihoodShifted, cur_log_like);
-                        number_fn_evaluations = number_fn_evaluations + current_number_fn_evaluations;
-                    end
-                end
+                [ samples, number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, axis_interval, logLikelihood, EP_mean, EP_chol );
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 4. Convergence Diagnostics and Effective Sample Size for ESS
@@ -123,7 +105,8 @@ for dimension_index = 1:length(dimensions)
                 % 5. Plot distributions (if 2 dimensional)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                plotSimulatedGaussianEPESS( plotting_on_off, dimension, alphas, alpha_index, alpha, pseudoLogLikelihoodShifted, plot_axis_interval, grid_size, number_mixtures, mixture_weights, mixture_means, mixture_chol, EP_mean, EP_covariance, samples)
+                pseudoLogLikelihood = @(x)( logLikelihood(x) - logGaussPdfChol(x', EP_mean', EP_chol));
+                plotSimulatedGaussianEPESS( plotting_on_off, dimension, alphas, alpha_index, alpha, pseudoLogLikelihood, plot_axis_interval, grid_size, number_mixtures, mixture_weights, mixture_means, mixture_chol, EP_mean, EP_covariance, samples(:,:,1))
                 
             end
         end
