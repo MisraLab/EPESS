@@ -144,7 +144,7 @@ for dimension_index = 1:length(dimensions)
 %                 title('HMC Samples')
 
                 % trace plots
-            end
         end
     end
 end
+
