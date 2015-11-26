@@ -29,12 +29,12 @@ number_chains = 4; %4
 inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
 normal_true_student_t_false = true; % True if using normal, false if using student's t
 students_t_df = 0.5; % The degrees of freedom of the student's t
-axis_interval = 15;  % Maximum distance of the mean of a simulated gaussian from the origin
+axis_interval = 20;  % Maximum distance of the mean of a simulated gaussian from the origin
 min_distance_between_simulated_means = axis_interval/(number_mixtures+1); % This ensures that the balls centered on the mean can easy sit in the space
 
 % Decide which algorithm to run
 run_epess = true;
-run_hmc = false;
+run_hmc = true;
 
 % Hyperparameters for plotting
 plotting_on_off = true; % True if plotting, false otherwise
@@ -42,7 +42,7 @@ plot_axis_interval = 1.5*axis_interval; % The radius of the plot. Made larger th
 grid_size = 150; % Number of points to plot along each axis
 
 % Hyperparameters that change
-alphas = [0.5,2]; % [0.5,1,2,5,10,20]
+alphas = [1]; % [0.5,1,2,5,10,20]
 dimensions = [2]; % [2,10,50,100]
 
 % Effective Sample Size
@@ -73,7 +73,7 @@ for dimension_index = 1:length(dimensions)
                 % 2. Calculate the EP-approximation
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
-                [ EP_mean, EP_covariance, EP_chol ] = epApproximation( number_mixtures, dimension, alpha, mixture_weights, mixture_means, mixture_covariances );
+                [ EP_mean, EP_covariance, EP_chol ] = EpApproximation( number_mixtures, dimension, alpha, mixture_weights, mixture_means, mixture_covariances );
     
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 3. Perform ESS given the EP approximation
@@ -128,23 +128,20 @@ for dimension_index = 1:length(dimensions)
             % 7. Plotting HMC vs reults for a given alpha
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            if dimension == 2
-
-                %%%%%%%%%% Plot results of EP-ESS vs HMC %%%%%%%%%%
-% 
-%                 subplot(length(alphas),3,3 + 3*(alpha_index-1));
-%                 plot(samples(:,1)+EP_mean(1), samples(:,2)+EP_mean(2), 'x')
+%             if dimension == 2
+%             
+%                 figure
+%                 
+%                 subplot(1,2,1);
+%                 %plot(samples(:,1)+EP_mean(1), samples(:,2)+EP_mean(2), 'x')
+%                 plot(samples(:,1), samples(:,2), 'x')
 %                 axis([-plot_axis_interval plot_axis_interval -plot_axis_interval plot_axis_interval])
-%                 title(['ESS samples for alpha = ',num2str(alpha)])
-                
-                % subplot(length(alphas),3,3 + 3*(alpha_index-1));
-                figure
-                plot(sims(:, 1), sims(:, 2), 'x')
-                hold on 
-                ezcontour(@(x,y)(mixture_pdf([x,y])) , [-plot_axis_interval , plot_axis_interval] , grid_size)
-                             
-                axis([-plot_axis_interval plot_axis_interval -plot_axis_interval plot_axis_interval])
-                title('HMC Samples')
+%                 title(['EPESS samples for alpha = ',num2str(alpha)])
+%                 
+%                 subplot(1,2,2);
+%                 plot(sims(:, 1), sims(:, 2), 'x')
+%                 axis([-plot_axis_interval plot_axis_interval -plot_axis_interval plot_axis_interval])
+%                 title('HMC Samples')
 
                 % trace plots
             end

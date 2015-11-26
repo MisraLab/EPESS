@@ -25,7 +25,7 @@ hmc_data = struct('number_mixtures', number_mixtures,'dimension',dimension,'dime
 %                              'mixture_means',mixture_means,'mix_cov', mixture_covariances);
 
 %% Fitting Stan Model
-fit = stan('file', 'hmc.stan', 'data', hmc_data, 'iter',number_samples, 'chains',4);
+fit = stan('file', '/Users/Jalaj/EPESS/MATLAB_code/hmc.stan', 'data', hmc_data, 'iter',number_samples, 'chains',4);
 pause(10)
 
 %% Breaking down samples into 4 chains

@@ -1,4 +1,4 @@
-function [ samples, number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol ) %axis_interval
+function [ samples, number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, initial_point ) %axis_interval
 %Outputs samples from epess
 
     pseudoLogLikelihoodShifted = @(x)( logLikelihood(x+EP_mean) - logGaussPdfChol(x', zeros(dimension,1), EP_chol));
@@ -9,8 +9,13 @@ function [ samples, number_fn_evaluations ] = epessSampler( number_samples , dim
         
     for chain_index = 1:number_chains
 
+        
+        if (nargin < 7) || isempty(initial_point)
+            initial_point = 0;
+       end
+
         % Initialize chain
-        current_sample = [0,0];%axis_interval*(2*rand(1,dimension)-1);
+        current_sample = initial_point;%axis_interval*(2*rand(1,dimension)-1);
         samples(1,:,chain_index) = current_sample;
         cur_log_like = pseudoLogLikelihoodShifted(current_sample);
         cur_number_fn_evaluations = 0;

@@ -25,7 +25,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hyperparameters that are constant for all alphas, dimensions,...
-number_samples = 100; % Eventually use 10000
+number_samples = 1000; % Eventually use 10000
 number_examples = 1; % 20
 number_chains = 4; %4
 
@@ -46,8 +46,8 @@ plot_axis_interval = 1.5*(axis_interval+distance_box_placement); % The radius of
 grid_size = 100; % Number of points to plot along each axis
 
 % Boundaries
-lB = [150; -1];    
-uB = [151;1];
+lB = [100; -1];    
+uB = [101;1];
 
 % Effective Sample Size
 neff = zeros(length(dimensions), number_examples); % We will average over the examples
@@ -92,7 +92,7 @@ for dimension_index = 1:length(dimensions)
 %                 pseudoLogLikelihoodShifted = @(x)( logMixturePdfFn(x+EP_mean, number_mixtures, mixture_weights, mixture_means, mixture_chol ) ...
 %                                                       - logGaussPdfChol(x', mu_ep, chol(Sigma_ep)));
 
-
+                
 %                 % Density at point x
 %                 lB = lB-mu_ep;
 %                 uB = uB-mu_ep;
@@ -122,11 +122,40 @@ for dimension_index = 1:length(dimensions)
 % %  
 %                 subplot(1,2,2);
 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % 4. Naive ESS -- Similar to HMC 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+                naive_mean = zeros(dimension, 1);
+                naive_sigma = eye(dimension);
+                naive_chol = chol(naive_sigma);
+                [ samples_naive, number_fn_evaluations_naive ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, naive_mean', naive_chol, ((lB+uB)/2)'  ) ;
+
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % 5. Plotting 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                
+                subplot(1,3,1);
                 plot(samples(:,1), samples(:,2), 'x')
-                hold on 
-                ezcontour(@(x,y)(mvnpdf([x;y], mu_ep, Sigma_ep)) , [lB(1) , uB(1), lB(2), uB(2)] , grid_size)            
+%                 hold on 
+%                 ezcontour(@(x,y)(mvnpdf([x;y], mu_ep, Sigma_ep)) , [lB(1) , uB(1), lB(2), uB(2)] , grid_size)            
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('EP-ESS Samples')
+                
+                subplot(1,3,2);
+                plot(samples_naive(:,1), samples_naive(:,2), 'x')
+                axis([lB(1) , uB(1), lB(2), uB(2)])
+                title('Naive-ESS Samples')
+                
+                
+                subplot(1,3,3);
+                ezmeshc(@(x,y)(logPdfTmg([x,y], mu, chol_Sigma, C, lB, uB )) , [lB(1)-0.5 , uB(1)+0.5, lB(2), uB(2)] , grid_size)
+                title('Desnity plot of TMG')
+                %ezmesh(@(x,y)(pseudoLogLikelihoodShifted([x,y])) , [-plot_axis_interval , plot_axis_interval] , grid_size)
                 
     end
                 
