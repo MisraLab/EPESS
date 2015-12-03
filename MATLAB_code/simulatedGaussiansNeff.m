@@ -31,10 +31,12 @@ normal_true_student_t_false = true; % True if using normal, false if using stude
 students_t_df = 0.5; % The degrees of freedom of the student's t
 axis_interval = 20;  % Maximum distance of the mean of a simulated gaussian from the origin
 min_distance_between_simulated_means = axis_interval/(number_mixtures+1); % This ensures that the balls centered on the mean can easy sit in the space
+KL_accuracy_number_samples = 100000; % Number of samples used in empirical KL calculation (controls the accuracy)
+hit_radius = 1; % Radius around a mode which is considered as a "hit"
 
 % Decide which algorithm to run
 run_epess = true;
-run_hmc = true;
+run_hmc = false;
 
 % Hyperparameters for plotting
 plotting_on_off = true; % True if plotting, false otherwise
@@ -82,7 +84,8 @@ for dimension_index = 1:length(dimensions)
                 [ samples, number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol );
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                % 4. Convergence Diagnostics and Effective Sample Size for ESS
+                % 4. Convergence Diagnostics, Effective Sample Size for
+                % ESS, empirical KL and when hit modes
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 % Need to look at this again
@@ -92,7 +95,7 @@ for dimension_index = 1:length(dimensions)
                 % samples_truncated = samples((number_samples/2+1):number_samples , :, :);
 
                 [neff(dimension_index, alpha_index, example_index)] = mpsrf(samples((number_samples/2+1):number_samples , :, :));
-
+                
                 % Report statistics
                 % neff_relative = neff(:,:,:) ./ repmat(mean(neff(:, :, :),2),1,4);
                 % neff_mean = mean(neff(:, :, :),3)
@@ -100,6 +103,9 @@ for dimension_index = 1:length(dimensions)
                 % neff_median = median(neff(:, :, :),3)
                 % neff_max = max(neff(:, :, :),[],3)
                 % neff_min = min(neff(:, :, :),[],3)
+                
+                empirical_KL_divergences = arrayfun(@(chain_index)(empiricalKLDivergence( samples(:,:,chain_index), mixture_means, mixture_covariances, mixture_weights, KL_accuracy_number_samples, dimension )) , 1:number_chains)
+                number_modes_hit = arrayfun(@(chain_index)(numberModesHit( samples(:,:,chain_index), mixture_means, hit_radius)), 1:number_chains)
  
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 5. Plot distributions (if 2 dimensional)

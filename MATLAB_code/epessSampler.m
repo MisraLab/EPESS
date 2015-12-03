@@ -9,15 +9,12 @@ function [ samples, number_fn_evaluations ] = epessSampler( number_samples , dim
         
     for chain_index = 1:number_chains
 
-        
+        % Initialize chain        
         if (nargin < 7) || isempty(initial_point)
             initial_point = 0;
-       end
-
-        % Initialize chain
-        current_sample = initial_point;%axis_interval*(2*rand(1,dimension)-1);
-        samples(1,:,chain_index) = current_sample;
-        cur_log_like = pseudoLogLikelihoodShifted(current_sample);
+        end
+        samples(1,:,chain_index) = initial_point;%axis_interval*(2*rand(1,dimension)-1);
+        cur_log_like = pseudoLogLikelihoodShifted(initial_point);
         cur_number_fn_evaluations = 0;
 
         % Run MCMC
