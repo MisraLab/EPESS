@@ -6,8 +6,8 @@ y = zeros(1,n_samples);
 z = zeros(1,n_samples);
 
 % hyperparamters
-A = 2;
-B = 2;
+A = 10;
+B = A;
 
 % for i=1:n_samples
 %     
@@ -38,7 +38,8 @@ for sample_index = 1:n_samples
     
     
     
-    % Do slice sampling here
+    % Do slice sampling here: Note slice sampling here will be on the joint
+    % space of theta and s
     
     theta_new = 2*pi*rand;
     f =  v_0*sin(theta_new) + v_1*cos(theta_new);
@@ -74,7 +75,7 @@ end
 
  for sample_index = 1:n_samples
      
-     y(sample_index)=trnd(4);
+     y(sample_index)=trnd(2*A);
      z(sample_index)=randn;
  end
  
