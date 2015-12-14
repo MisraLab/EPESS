@@ -22,8 +22,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hyperparameters that are constant for all alphas, dimensions,...
-number_mixtures = 1;
-number_samples = 1000; % Eventually use 10000
+number_mixtures = 4;
+number_samples = 2000; % Eventually use 10000
 number_examples = 1; % 20
 number_chains = 1; %4
 inverse_wishart_weight = 0; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
@@ -44,8 +44,8 @@ plot_axis_interval = 1.5*axis_interval; % The radius of the plot. Made larger th
 grid_size = 100; % Number of points to plot along each axis
 
 % Hyperparameters that change
-alphas = [1]; % [0.5,1,2,5,10,20]
-dimensions = [50]; % [2,10,50,100]
+alphas = [1,2,5]; % [0.5,1,2,5,10,20]
+dimensions = [2]; % [2,10,50,100]
 
 % Effective Sample Size
 neff = zeros(length(dimensions), length(alphas), number_examples);

@@ -10,8 +10,15 @@ function [ mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_int
        
     % Specify Box constarints
         
-       C = eye(dimension);
+       C = eye(dimension); %% This denotes axis-alligned constraints
        
+       
+%        lB = (100/dimension)*(distance_box_placement).* ones(dimension,1);
+%        lB = (distance_box_placement).* ones(dimension,1);
+% 
+%        uB = lB + axis_interval.*ones(dimension, 1);      
+
+
 end
        
    
