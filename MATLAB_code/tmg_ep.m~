@@ -250,29 +250,25 @@ for dimension_index = 1:length(dimensions)
    end           % Diffferent boundary placements               
     
      
+   
+
+e1=0.5*std_neff_epess(1,:);
+e2=0.5*std_neff_ess(1,:);
+e3=0.5*std_neff_exact_hmc(1,:);
+
+
 figure    
 plot(mean_neff_epess(1,:))
 hold on
-plot(mean_neff_ess(1,:))
-hold on 
-plot(mean_neff_exact_hmc(1,:))
-xlabel('Position of the box') % x-axis label
-ylabel('Neff/CPU time') % y-axis label
-legend('EPESS','ESS','Exact-HMC','Location','northeast')
-title(['Performance Comparison'])
-   
-
-e1=std_neff_epess(1,:);
-e2=std_neff_epess(1,:);
-e3=std_neff_epess(1,:);
-
-
-figure    
-errorbar(mean_neff_epess(1,:), e1)
+errorbar(mean_neff_epess(1,:), e1, 'o')
 hold on
-errorbar(mean_neff_ess(1,:),e2)
+plot(mean_neff_ess(1,:))
+hold on
+errorbar(mean_neff_ess(1,:), e2, 'x')
+hold on
+plot(mean_neff_exact_hmc(1,:),e2, '*')
 hold on 
-errorbar(mean_neff_exact_hmc(1,:).e3)
+errorbar(mean_neff_exact_hmc(1,:),e3, 'x')
 xlabel('Position of the box') % x-axis label
 ylabel('Neff/CPU time') % y-axis label
 legend('EPESS','ESS','Exact-HMC','Location','northeast')

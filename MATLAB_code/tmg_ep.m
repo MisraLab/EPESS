@@ -258,14 +258,14 @@ e3=0.5*std_neff_exact_hmc(1,:);
 
 
 figure    
-errorbar(mean_neff_epess(1,:), e1)
+errorbar(mean_neff_epess(1,:), e1, '-o')
 hold on
-errorbar(mean_neff_ess(1,:),e2)
-hold on 
-errorbar(mean_neff_exact_hmc(1,:),e3)
+errorbar(mean_neff_ess(1,:), e2, '-x')
+hold on
+errorbar(mean_neff_exact_hmc(1,:),e3,'-*')
 xlabel('Position of the box') % x-axis label
 ylabel('Neff/CPU time') % y-axis label
-legend('EPESS','ESS','Exact-HMC','Location','northeast')
+legend('EPESS','Naive-ESS','Exact-HMC','Location','northeast')
 title(['Performance Comparison'])
    
 end
