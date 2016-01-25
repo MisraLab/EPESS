@@ -22,12 +22,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hyperparameters that are constant for all alphas, dimensions,...
-number_mixtures = 4;
+number_mixtures = 3;
 number_samples = 2000; % Eventually use 10000
 number_examples = 1; % 20
-number_chains = 1; %4
+number_chains = 4; %4
 inverse_wishart_weight = 0; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
-axis_interval = 25;  % Maximum distance of the mean of a simulated gaussian from the origin
+axis_interval = 15;  % Maximum distance of the mean of a simulated gaussian from the origin
 min_distance_between_simulated_means = axis_interval/(number_mixtures+1); % This ensures that the balls centered on the mean can easy sit in the space
 KL_accuracy_number_samples = 100000; % Number of samples used in empirical KL calculation (controls the accuracy)
 hit_radius = 1; % Radius around a mode which is considered as a "hit"
@@ -44,7 +44,7 @@ plot_axis_interval = 1.5*axis_interval; % The radius of the plot. Made larger th
 grid_size = 100; % Number of points to plot along each axis
 
 % Hyperparameters that change
-alphas = [1,2,5]; % [0.5,1,2,5,10,20]
+alphas = [1,2]; % [0.5,1,2,5,10,20]
 dimensions = [2]; % [2,10,50,100]
 
 % Effective Sample Size
@@ -64,9 +64,9 @@ for dimension_index = 1:length(dimensions)
         % 1. Simulate the mixture of Gaussians
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-%         [ mixture_weights, mixture_means, mixture_covariances, mixture_chol ] = simulateMixture( number_mixtures, dimension, axis_interval, min_distance_between_simulated_means, inverse_wishart_weight, inverse_wishart_df );
-%         logLikelihood = @(x)( logMixturePdfFn(x, number_mixtures, mixture_weights, mixture_means, mixture_chol ));
-%                 
+        [ mixture_weights, mixture_means, mixture_covariances, mixture_chol ] = simulateMixture( number_mixtures, dimension, axis_interval, min_distance_between_simulated_means, inverse_wishart_weight, inverse_wishart_df );
+        logLikelihood = @(x)( logMixturePdfFn(x, number_mixtures, mixture_weights, mixture_means, mixture_chol ));
+                
         if run_epess
             for alpha_index = 1:length(alphas)
                 alpha = alphas(alpha_index); % Select the current alpha

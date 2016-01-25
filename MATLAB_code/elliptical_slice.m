@@ -1,4 +1,4 @@
-function [xx, cur_log_like, number_fn_evaluations] = elliptical_slice(xx, prior, log_like_fn, cur_log_like, angle_range, varargin)
+function [xx, cur_log_like, number_fn_evaluations, nu] = elliptical_slice(xx, prior, log_like_fn, cur_log_like, angle_range, varargin)
 %ELLIPTICAL_SLICE Markov chain update for a distribution with a Gaussian "prior" factored out
 %
 %     [xx, cur_log_like] = elliptical_slice(xx, chol_Sigma, log_like_fn);
@@ -52,6 +52,8 @@ if (nargin < 5) || isempty(angle_range)
     angle_range = 0;
 end
 
+
+
 % Set up the ellipse and the slice threshold
 if numel(prior) == D
     % User provided a prior sample:
@@ -64,6 +66,9 @@ else
     nu = reshape(prior'*randn(D, 1), size(xx));
 end
 hh = log(rand) + cur_log_like;
+
+
+
 
 % Set up a bracket of angles and pick a first proposal.
 % "phi = (theta'-theta)" is a change in angle.
@@ -78,6 +83,9 @@ else
     phi_max = phi_min + angle_range;
     phi = rand*(phi_max - phi_min) + phi_min;
 end
+
+
+
 
 number_fn_evaluations = 0;
 % Slice sampling loop

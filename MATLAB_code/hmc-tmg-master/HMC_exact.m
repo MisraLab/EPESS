@@ -1,4 +1,4 @@
-function [Xs_new] = HMC_exact(F, g, M, mu_r, cov, L, initial_X)
+function [Xs_new, number_fn_eval_hmc ] = HMC_exact(F, g, M, mu_r, cov, L, initial_X)
 
 % Implementation of the algorithm described in http://arxiv.org/abs/1208.4118
 % Author: Ari Pakman
@@ -48,7 +48,7 @@ else
     mu = R\(R'\r);
     g = g+F*mu;
     F = F/R;               % this is the time-consuming step in this code section
-    initial_X= initial_X -mu;
+    initial_X= initial_X - mu;
     initial_X = R*initial_X;    
 end
 
@@ -79,6 +79,7 @@ Ft = F';
 
 %% Sampling loop
 
+number_fn_eval_hmc = 0;
 
 last_X= initial_X;
 Xs=zeros(d,L);
@@ -121,7 +122,10 @@ tt=0;                    % records how much time the particle already moved
             t1=-phn + acos(-g(pn)./U(pn));  % time at which coordinates hit the walls 
                                             % this expression always gives the correct result because U*cos(phi + t) + g >= 0.
 
-
+         % Currently counting only this computation as function 
+         % evaluation
+         number_fn_eval_hmc = number_fn_eval_hmc + length(t1);
+         
          % if there was a previous reflection (j>0)
          % and there is a potential reflection at the sample plane                                    
          % make sure that a new reflection at j is not found because of numerical error
@@ -145,6 +149,7 @@ tt=0;                    % records how much time the particle already moved
 
         else  %if pn(i) =0 for all i
                 mt =T;
+                
         end   %if pn(i)
 
         tt=tt+mt;
