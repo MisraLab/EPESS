@@ -26,7 +26,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hyperparameters that are constant for all alphas, dimensions,...
-number_samples = 1000; % Eventually use 10000
+number_samples = 100; % Eventually use 10000
 number_examples = 1; % Running the same example 30 times to get the avg. n_eff
 number_chains = 4; %4
 
@@ -41,10 +41,10 @@ dimensions = [2]; % [2,10,50,100]
 plotting_on_off = true; % True if plotting, false otherwise
 trace_plot_on_off = false;
 
-epess_on_off = true;
-naive_on_off = true;
+epess_on_off = false;
+naive_on_off = false;
 hmc_on_off = false;
-eff_epess_on_off = false;
+eff_epess_on_off = true;
 
 plot_axis_interval = 1.5*(axis_interval+distance_box_placement); % The radius of the plot. Made larger than the radius of the mixture means so that can show what happens for a gaussian that sits on the boundary
 grid_size = 200; % Number of points to plot along each axis
@@ -52,7 +52,7 @@ grid_size = 200; % Number of points to plot along each axis
 
 % Gridding up placement of the left boundry (denoted by x)
 % % x = linspace(10,10,10);
-% x=100;
+x=10;
 
 
 % Effective Sample Size, We will average over the examples
@@ -224,13 +224,26 @@ for dimension_index = 1:length(dimensions)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if eff_epess_on_off == 1
                 
+                EP_cov_inv = inv(EP_covariance);
+                g = [-lB;uB];
+                F = vertcat(eye(dimension), -eye(dimension));
                 disp('Efficient EPESS') 
                 temp = tic;
-                [ samples_eff_epess,nu_eff_epess, number_fn_eval_eff_epess ] = epessSampler_tmg( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g);
-               
+                
+                %% This implements EPESS but now with the desired angle
+                % ranges. This is a failed attempt as of now.
+                
+                %[ samples_eff_epess,nu_eff_epess, number_fn_eval_eff_epess ] = epessSampler_tmg( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g);
+                
+                %% This implements the idea of uniform sampling along the
+                % "acceptable" angle slices
+                
+                [ samples_eff_epess, nu_eff_epess, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g,EP_cov_inv);
                 time_eff_epess = toc(temp);
                 
                 end
+                
+                
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 6. Plotting 
@@ -287,7 +300,7 @@ for dimension_index = 1:length(dimensions)
                 mpsrf(samples)
                 mpsrf(samples_naive)
                 mpsrf(samples_exact)
-%                 mpsrf(samples_eff_epess)
+                mpsrf(samples_eff_epess)
 %                 
 %                 subplot(1,3,3);
 %                 ezmeshc(@(x,y)(logPdfTmg([x,y], mu, chol_Sigma, C, lB, uB )) , [lB(1)-0.5 , uB(1)+0.5, lB(2), uB(2)] , grid_size)
