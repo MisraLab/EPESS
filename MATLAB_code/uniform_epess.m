@@ -1,4 +1,4 @@
-function [xx, number_fn_evaluations, nu] = uniform_epess(xx, prior, log_like_fn, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv)
+function [xx, number_fn_evaluations, nu] = uniform_epess(xx, prior, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv)
 
 
 % This code computes the acceptable slices of the ellipse which lie within 
@@ -41,20 +41,25 @@ end
 
 
 % These give us the angle ranges for which the ellipse lies within the box
+if angle_slice(1) == 0
+   angle_slice = [angle_slice, 2*pi]
+else
+   angle_slice = [0, angle_slice, 2*pi]
 
-angle_slice = [0, angle_slice, 2*pi]
-angle_slice_1 = angle_slice - 2*pi
-angle_slice_2 = [angle_slice_1, angle_slice]
+end
+
+angle_slice_1 = angle_slice - 2*pi;
+angle_slice_2 = [angle_slice_1, angle_slice];
 
 number_fn_evaluations = fn_eval;        % Coming from the the wall hitting computations
 
 
 
-if hh < -10000                     % If the likelihood of the initial point is very small (as in the case of starting points, we do EPESS? or uniform sampling?)
-    phi = simulate(angle_slice);
-    xx_prop = xx*cos(phi) + nu*sin(phi);
-
-else
+% if hh < -10000                     % If the likelihood of the initial point is very small (as in the case of starting points, we do EPESS? or uniform sampling?)
+%     phi = simulate(angle_slice);
+%     xx_prop = xx*cos(phi) + nu*sin(phi);
+% 
+% else
 
 
 % Getting the constants
@@ -82,8 +87,9 @@ else
     delta0 = (c^2) - 3*b*d + 12*a*e;
     delta1 = 2*(c^3) - 9*b*c*d + 27*(b^2)*e + 27*a*(d^2) - 72*a*c*e;
     
-    Q = ( ( delta1 + (delta1^2 - (4*delta0^3))^0.5 )/2)^(1/3);
-    S = 0.5* ( ( (Q + (delta0/Q))/(3*a) - (2/3)*p)^(.5));
+    temp = (delta1^2 - (4*(delta0^3)) )^0.5;
+    Q = ((delta1 + temp)/2)^(1/3);
+    S = 0.5* ( ( (Q + (delta0/Q))/(3*a) - (2/3)*p)^(0.5));
 
     
     k1 = ((q/S) - 2*p - 4*(S^2))^0.5;
@@ -172,7 +178,8 @@ else
 
 
     end
-
-end          
+         
 xx_prop + EP_mean
 xx = xx_prop;
+
+end 

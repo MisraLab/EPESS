@@ -28,8 +28,8 @@ function [ angle_slice fn_eval] = Wall_Hitting( curr_point, nu, F, g, EP_mean, d
 % b = curr_point + EP_mean;
 
 
-a = nu + EP_mean; 
-b = curr_point + EP_mean;
+a = nu; 
+b = curr_point;
 
 
 
@@ -40,7 +40,7 @@ U = sqrt(fa.^2 + fb.^2);
 phi = atan2(-fa,fb); 
 
 
-% g = g +[EP_mean';-EP_mean'];
+g = g + [EP_mean';-EP_mean'];
 pn = abs(g./U)<1; % these are the walls that may be hit 
         
 
@@ -85,6 +85,7 @@ if any(pn)
 else
     % default value in which we consider the entire ellipse
     angle_slice=0;
+    fn_eval = 1;
 end    
 
 end

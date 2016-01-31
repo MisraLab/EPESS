@@ -7,7 +7,7 @@ function [ mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_int
        mu = zeros(dimension,1);
        lambda= 0;
        
-       if dimension ==2
+       if dimension == 2
             Sigma = [1 0; 0 1];
             lB = [x(boundary_index);-1]; 
             uB = [x(boundary_index)+1;1];

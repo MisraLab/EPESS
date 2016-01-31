@@ -124,7 +124,7 @@ tt=0;                    % records how much time the particle already moved
 
          % Currently counting only this computation as function 
          % evaluation
-         number_fn_eval_hmc = number_fn_eval_hmc + length(t1);
+         number_fn_eval_hmc = number_fn_eval_hmc + 1;
          
          % if there was a previous reflection (j>0)
          % and there is a potential reflection at the sample plane                                    

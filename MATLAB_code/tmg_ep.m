@@ -41,7 +41,11 @@ dimensions = [2]; % [2,10,50,100]
 plotting_on_off = true; % True if plotting, false otherwise
 trace_plot_on_off = false;
 
-epess_on_off = false;
+epess_on_off = true;
+epess_recycle_on_off = true;
+% Enter the number of points per ellipse
+N = 2;
+
 naive_on_off = false;
 hmc_on_off = false;
 eff_epess_on_off = true;
@@ -52,19 +56,20 @@ grid_size = 200; % Number of points to plot along each axis
 
 % Gridding up placement of the left boundry (denoted by x)
 % % x = linspace(10,10,10);
-x=10;
+x=100;
 
 
 % Effective Sample Size, We will average over the examples
 neff_epess = zeros(length(dimensions), number_examples,length(x)); 
+neff_epess_recycle = zeros(length(dimensions), number_examples,length(x)); 
 neff_ess = zeros(length(dimensions), number_examples,length(x));
 neff_exact_hmc = zeros(length(dimensions), number_examples,length(x));
 neff_eff_epess = zeros(length(dimensions), number_examples,length(x));
 
 
-time_epess = zeros(length(dimensions), number_examples);
-time_ess = zeros(length(dimensions), number_examples);
-time_exact_hmc = zeros(length(dimensions), number_examples);
+% time_epess = zeros(length(dimensions), number_examples);
+% time_ess = zeros(length(dimensions), number_examples);
+% time_exact_hmc = zeros(length(dimensions), number_examples);
 
 
 
@@ -158,6 +163,21 @@ for dimension_index = 1:length(dimensions)
 
 
 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % 4. EPESS with recycling step
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               
+                if epess_recycle_on_off == 1
+                
+                disp('EPESS with recycling') 
+                temp = tic;
+                [ samples_recycle, number_fn_eval_epess_recycle ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, N );
+               
+                time_epess = toc(temp);
+                
+                end
+                
+
 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 4. Excat HMC -- Ari's Matlab Implementation
@@ -238,7 +258,7 @@ for dimension_index = 1:length(dimensions)
                 %% This implements the idea of uniform sampling along the
                 % "acceptable" angle slices
                 
-                [ samples_eff_epess, nu_eff_epess, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g,EP_cov_inv);
+                [ samples_eff_epess, nu_eff_epess, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g, EP_cov_inv);
                 time_eff_epess = toc(temp);
                 
                 end
@@ -251,10 +271,15 @@ for dimension_index = 1:length(dimensions)
 
                 if plotting_on_off == 1
                 
-                subplot(1,4,1);
+                subplot(1,5,1);
                 plot(samples(:,1), samples(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('EP-ESS')
+                
+                subplot(1,5,2);
+                plot(samples_recycle(:,1), samples_recycle(:,2), 'x')
+                axis([lB(1) , uB(1), lB(2), uB(2)])
+                title('EP-ESS Recycle')
                 
 %                 hold on 
 %                 ezcontour(@(x,y)(mvnpdf([x;y], EP_mean' , EP_covariance)) , [lB(1)-.5 , uB(1)+.5, lB(2)-1, uB(2)+1] , grid_size)            
@@ -262,18 +287,18 @@ for dimension_index = 1:length(dimensions)
 %                 title('EP-ESS Samples')
 %                 hold off
 %                 
-                subplot(1,4,2);
+                subplot(1,5,3);
                 plot(samples_naive(:,1), samples_naive(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('Naive-ESS')
                 
-                subplot(1,4,3);
+                subplot(1,5,4);
                 plot(samples_exact(:,1), samples_exact(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('Exact-HMC')
                 
                 
-                subplot(1,4,4);
+                subplot(1,5,5);
                 plot(samples_eff_epess(:,1), samples_eff_epess(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('Eff-EPESS')
@@ -293,11 +318,13 @@ for dimension_index = 1:length(dimensions)
                 % Comaprison: n_eff/function evaluation
                 
                 neff_epess(dimension_index, example_index,boundary_index) = mpsrf(samples)/number_fn_eval_epess;
+                neff_epess_recycle(dimension_index, example_index,boundary_index) = mpsrf(samples_recycle)/number_fn_eval_epess_recycle;
                 neff_ess(dimension_index, example_index,boundary_index) = mpsrf(samples_naive)/number_fn_eval_naive;
                 neff_exact_hmc(dimension_index, example_index,boundary_index) = mpsrf(samples_exact)/number_fn_eval_exact_hmc;
                 neff_eff_epess(dimension_index, example_index,boundary_index) = mpsrf(samples_eff_epess)/number_fn_eval_eff_epess;
 
                 mpsrf(samples)
+                mpsrf(samples_recycle)
                 mpsrf(samples_naive)
                 mpsrf(samples_exact)
                 mpsrf(samples_eff_epess)
@@ -316,11 +343,13 @@ for dimension_index = 1:length(dimensions)
                % i.e. averaging over different exxamples
                
                 mean_neff_epess(dimension_index,boundary_index) = mean(neff_epess(dimension_index,:,boundary_index));
+                mean_neff_epess_recycle(dimension_index,boundary_index) = mean(neff_epess_recycle(dimension_index,:,boundary_index));
                 mean_neff_ess(dimension_index,boundary_index) = mean(neff_ess(dimension_index,:,boundary_index));
                 mean_neff_exact_hmc(dimension_index,boundary_index) = mean(neff_exact_hmc(dimension_index,:,boundary_index));
                 mean_neff_eff_epess(dimension_index,boundary_index) = mean(neff_eff_epess(dimension_index,:,boundary_index));
                 
                 mean_neff_epess
+                mean_neff_epess_recycle
                 mean_neff_ess
                 mean_neff_exact_hmc
                 mean_neff_eff_epess
@@ -335,13 +364,7 @@ for dimension_index = 1:length(dimensions)
                               
                   
    end           % Loop ends for diffferent boundary placements               
-    
-  
-                
-% neff_epess
-% neff_ess
-% neff_exact_hmc
-% neff_eff_epess   
+      
    
    
 %% Plotting for placement of different boundary points in the 2-d case
@@ -397,7 +420,7 @@ for dimension_index = 1:length(dimensions)
 % Better performance if we elongate the slice along y-axis and also make the variance large along y in the original gaussian 
 % Intuitive -- now Exact-HMC needs to traverse a larger vertical distance
 % -- tuning in terms of T will need to be done. Also the fact that exact
-% HMC finds it much harder t climb vertically.
+% HMC finds it much harder to climb vertically.
 
 
 end
