@@ -21,7 +21,7 @@ function [ samples, nu, number_fn_evaluations ] = uniformEpess( number_samples ,
         % Run MCMC
         for sample_index = 2 : number_samples
             
-            sample_index
+%             sample_index
             % This if loop is for specifying the angle range for tmg case
             
             [samples(sample_index,:,chain_index), cur_number_fn_evaluations, nu(sample_index,:,chain_index)] = uniform_epess( samples(sample_index-1,:,chain_index) , EP_chol, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv);

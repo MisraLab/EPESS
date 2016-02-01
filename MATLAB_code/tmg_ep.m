@@ -41,13 +41,13 @@ dimensions = [2]; % [2,10,50,100]
 plotting_on_off = true; % True if plotting, false otherwise
 trace_plot_on_off = false;
 
-epess_on_off = true;
+epess_on_off = false;
 epess_recycle_on_off = false;
 % Enter the number of points per ellipse
 N = 2;
 
 naive_on_off = false;
-hmc_on_off = true;
+hmc_on_off = false;
 eff_epess_on_off = true;
 
 plot_axis_interval = 1.5*(axis_interval+distance_box_placement); % The radius of the plot. Made larger than the radius of the mixture means so that can show what happens for a gaussian that sits on the boundary
@@ -56,7 +56,7 @@ grid_size = 200; % Number of points to plot along each axis
 
 % Gridding up placement of the left boundry (denoted by x)
 % % x = linspace(10,10,10);
-x=0;
+x=100;
 
 
 % Effective Sample Size, We will average over the examples

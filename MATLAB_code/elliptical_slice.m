@@ -85,8 +85,6 @@ else
 end
 
 
-
-
 number_fn_evaluations = 0;
 % Slice sampling loop
 while true

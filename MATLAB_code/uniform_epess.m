@@ -29,39 +29,28 @@ hh = log(rand) + cur_log_like;
 
 
 % Input nu to Wall_hitting to compute the hitting times for all walls
-
+% Angle range \belongs to [0, 2*pi] gives us the ellipticalregion
+% inside the box
 
 [angle_slice, fn_eval] = Wall_Hitting(xx, nu, F, g, EP_mean, dimension);
 
-if angle_slice == 0
-    run_ess = 1;
-else
-    run_ess = 0;
-end
-
-
 % These give us the angle ranges for which the ellipse lies within the box
 if numel(angle_slice) == 0
-   angle_slice = [0, 2*pi]
+   angle_slice = [0, 2*pi];
+%    display('Entire ellipse');
    
-% else
-%    angle_slice = [0, angle_slice, 2*pi]
-
 end
 
-angle_slice_1 = angle_slice - 2*pi;
-angle_slice_2 = [angle_slice_1, angle_slice];
-
-number_fn_evaluations = fn_eval;        % Coming from the the wall hitting computations
 
 
+% angle_slice_1 = angle_slice - 2*pi;
+% angle_slice_2 = [angle_slice_1, angle_slice];
 
-% if hh < -10000                     % If the likelihood of the initial point is very small (as in the case of starting points, we do EPESS? or uniform sampling?)
-%     phi = simulate(angle_slice);
-%     xx_prop = xx*cos(phi) + nu*sin(phi);
-% 
-% else
+% Coming from the the wall hitting computations
+number_fn_evaluations = fn_eval;        
 
+% Solve for interval where the likelihood is > a chosen threshold
+% Given by the roots of a Quartic equation
 
 % Getting the constants
 % Here we have EP_chol input as prior
@@ -101,7 +90,7 @@ number_fn_evaluations = fn_eval;        % Coming from the the wall hitting compu
     x3 = -(b/(4*a)) + S + 0.5*k2;
     x4 = -(b/(4*a)) + S - 0.5*k2;
 
-    % Tested against MAtlab solver -- the roots match       
+%     Tested against MAtlab solver -- the roots match       
 %     syms y;
 %     S = vpa(solve(y^4*a + y^3*b + y^2*c + y*d + e,y, 'MaxDegree',4))
   
@@ -109,7 +98,7 @@ number_fn_evaluations = fn_eval;        % Coming from the the wall hitting compu
     roots  = [x1, x2, x3, x4];
     TOL=1e-10;
     np=abs(imag(roots))<TOL;
-    roots = sort(real(roots(np)))
+    roots = sort(real(roots(np)));
     
     
     if numel(roots) == 0
@@ -139,48 +128,29 @@ number_fn_evaluations = fn_eval;        % Coming from the the wall hitting compu
         end
         
         
-        range = range_intersection(range_1,range_2);  
-        slice_range = sort(acos(range));
-        exact_range = range_intersection(angle_slice, slice_range);
+        range = range_intersection(range_1,range_2); 
+        slice_range = sort(acos(range));  % This gives in [0, pi]
+        slice_range_1 = sort(2*pi - slice_range);
+        slice_range_2 = [slice_range, slice_range_1];% This is in [0, 2*pi]
+        exact_range = range_intersection(angle_slice, slice_range_2);
     end
     
-%     exact_range
-
-% Unform sampling loop
-    if run_ess == 1
-
-        % The entire ellipse was within the box
-        % Pick any point uniformly from within the ellipse
-        % The if condition is just a check  
-
-        %% Need to resolve this part 
-    %         phi = rand*2*pi;
-            xx_prop = xx;
-
-    %         if belongs(phi, angle_slice) == 1 || belongs(phi, angle_slice_1) == 1
-    %               
-    %         else 
-    %             error('BUG DETECTED: Shrunk to current position and still not acceptable.');
-    % 
-    %         end
-
-    else
-
-         % Pick a point uniformly form the given angle range
-
-            phi = simulate(exact_range);
-            if belongs(phi, exact_range) == 1
-                xx_prop = xx*cos(phi) + nu*sin(phi);   
-            else 
-                error('BUG DETECTED: Shrunk to current position and still not acceptable.');
-
-            end
+% Here exact_range is the intersection of 2 regions to a valid interval
 
 
+% Pick a point uniformly form the given exact_range
 
-    end
-         
-xx_prop + EP_mean
-xx = xx_prop;
+phi = simulate(exact_range);
+xx_prop = xx*cos(phi) + nu*sin(phi);  
 
+
+point = xx_prop + EP_mean;
+
+% Just a check to see if the accepted point lies within the box
+if (F*point' + g >0)
+    xx = xx_prop;
+else
+    display('Error: point outside the box')
+end
+    
 end 
