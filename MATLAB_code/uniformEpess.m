@@ -17,7 +17,6 @@ function [ samples, nu, number_fn_evaluations ] = uniformEpess( number_samples ,
         end
         samples(1,:,chain_index) = initial_point; %axis_interval*(2*rand(1,dimension)-1);
         cur_log_like = pseudoLogLikelihoodShifted(initial_point);
-        cur_number_fn_evaluations = 0;
 
         % Run MCMC
         for sample_index = 2 : number_samples

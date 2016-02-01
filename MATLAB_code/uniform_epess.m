@@ -41,10 +41,11 @@ end
 
 
 % These give us the angle ranges for which the ellipse lies within the box
-if angle_slice(1) == 0
-   angle_slice = [angle_slice, 2*pi]
-else
-   angle_slice = [0, angle_slice, 2*pi]
+if numel(angle_slice) == 0
+   angle_slice = [0, 2*pi]
+   
+% else
+%    angle_slice = [0, angle_slice, 2*pi]
 
 end
 
@@ -129,18 +130,18 @@ number_fn_evaluations = fn_eval;        % Coming from the the wall hitting compu
            for i=1:2:length(roots) - mod(length(roots),2)
                range_1 = [range_1 roots(i) roots(i+1)];
            end 
-        range_1
+%         range_1
         else
             for i=2:2:length(roots) + (mod(length(roots),2)-1)
                range_1 = [range_1 roots(i) roots(i+1)];
             end 
-        range_1
+%         range_1
         end
         
         
         range = range_intersection(range_1,range_2);  
-        slice_range = sort(acos(range))
-        exact_range = range_intersection(angle_slice, slice_range)
+        slice_range = sort(acos(range));
+        exact_range = range_intersection(angle_slice, slice_range);
     end
     
 %     exact_range

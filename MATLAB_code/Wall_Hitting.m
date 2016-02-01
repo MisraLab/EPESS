@@ -53,40 +53,69 @@ if any(pn)
                                             % this expression always gives the correct result because U*cos(phi + t) + g >= 0.
          
             t2=-phn + 2*pi - acos(-g(pn)./U(pn));
-            points_1 = zeros(length(t1),dimension);
-            points_2 = zeros(length(t2),dimension);
             
-            logic_1 = zeros(length(t1),1);
-            logic_2 = zeros(length(t1),1);
             
-            for i=1:length(t1)
-                points_1(i, :) = b*cos(t1(i)) + a*sin(t1(i));
-                logic_1(i) = all(F*points_1(i,:)' + g >=-0.0001);
-                points_2(i, :) = b*cos(t2(i)) + a*sin(t2(i));
-                logic_2(i) = all(F*points_2(i,:)' + g >=-0.00001);
+            % t2 is always greater than t1. Using range intersection code
+            % instead of checking all hitting points
+            
+            range = [0, t1(1), t2(1) ,2*pi];
+            if length(t1) >1
+            
+                for i=2:length(t1)
 
-            end
-            
-            angle = [t1(logical(logic_1))',  t2(logical(logic_2))'];
-            angle = sort(angle);
-            
-            if mod(length(angle),2) == 0
-               angle_slice = angle; 
+                    new_range = [0, t1(i), t2(i) ,2*pi];
+                    range = range_intersection(range, new_range); 
+                end
                 
-            else
-               angle_slice=0;
-              
             end
-                                           
-            fn_eval = length(t1);   
+            
+            % Checking for all points to see if they lie in the interval.
+            % Bad idea as its very slow
+            
+            
+%             points_1 = zeros(length(t1),dimension);
+%             points_2 = zeros(length(t2),dimension);
+            
+%             logic_1 = zeros(length(t1),1);
+%             logic_2 = zeros(length(t1),1);
+%             
+%             for i=1:length(t1)
+%                 points_1(i, :) = b*cos(t1(i)) + a*sin(t1(i));
+%                 logic_1(i) = all(F*points_1(i,:)' + g >=-0.0001);
+%                 points_2(i, :) = b*cos(t2(i)) + a*sin(t2(i));
+%                 logic_2(i) = all(F*points_2(i,:)' + g >=-0.00001);
+% 
+%             end
+%             
+%             angle = [t1(logical(logic_1))',  t2(logical(logic_2))'];
+%             angle = sort(angle);
+%             
+            
+%             
+%             if mod(length(angle),2) == 0
+%                angle_slice = angle; 
+%                 
+%             else
+%                angle_slice=0;
+%               
+%             end
+
+            angle_slice = range;                               
+            fn_eval = 1;   
             
 
 
 else
     % default value in which we consider the entire ellipse
-    angle_slice=0;
+    angle_slice=[]; % Only happens when the entire ellipse is in the box
     fn_eval = 1;
 end    
 
 end
+
+
+% This code gives us the corect wall hitting ranges. When the ellipse hits 
+% a wall at one point only, both t1(i) and t2(i) have the same value. 
+% new_range = [0, t1(i), t2(i) ,2*pi] will still give the correct range.
+% This case would happen with almost zero probability.
 
