@@ -120,6 +120,7 @@ for counter = 1:N
         number_fn_evaluations = number_fn_evaluations + 1;
         if cur_log_like > hh
             % New point is on slice, ** EXIT LOOP **
+            output(counter, :) = xx_prop;
             break;
         end
         % Shrink slice to rejected point
@@ -129,7 +130,6 @@ for counter = 1:N
         elseif phi < -tol
             phi_min = phi;              
         else  % (Truncating the slice shrinkage here and resetting to the current point)
-            xx_prop = xx;
             break;
         end
         
@@ -137,7 +137,6 @@ for counter = 1:N
         phi = rand*(phi_max - phi_min) + phi_min;
     end
     
-output(counter, :) = xx_prop;
 end
 
 % Output gives N sample points

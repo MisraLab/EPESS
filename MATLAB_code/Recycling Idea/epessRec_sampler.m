@@ -28,12 +28,12 @@ function [ samples,number_fn_evaluations ] = epessRec_sampler( number_samples , 
                 
                % Unformly choosing the next point (out of current points)
                % to continue the Markov Chain
-               k = unidrnd(N); 
+               k = unidrnd(length(output)); 
                next_point = output(k, :);
             end
             
             [output, cur_log_like , cur_number_fn_evaluations, nu(sample_index,:,chain_index)] = ess_recycle( next_point, EP_chol, pseudoLogLikelihoodShifted, cur_log_like, N, dimension);
-            samples(sample_index:(sample_index + N -1),:,chain_index) = output;
+            samples(sample_index:(sample_index + length(output) -1),:,chain_index) = output;
             number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations;
                        
         end

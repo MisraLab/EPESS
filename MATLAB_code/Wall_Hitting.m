@@ -1,4 +1,4 @@
-function [ angle_slice fn_eval] = Wall_Hitting( curr_point, nu, F, g, EP_mean, dimension)
+function [ angle_slice, fn_eval] = Wall_Hitting( curr_point, nu, F, g, EP_mean, dimension)
 % This function computes the angle range to be inputed to the ESS code
 
 
@@ -48,34 +48,34 @@ pn = abs(g./U)<1; % these are the walls that may be hit
 
 if any(pn) 
         
-            phn= phi(pn);
-            t1=-phn + acos(-g(pn)./U(pn));  % time at which coordinates hit the walls 
-                                            % this expression always gives the correct result because U*cos(phi + t) + g >= 0.
-         
-            t2=-phn + 2*pi - acos(-g(pn)./U(pn));
-            
-            
-            % t2 is always greater than t1. Using range intersection code
-            % instead of checking all hitting points
-            
-            range = [0, t1(1), t2(1) ,2*pi];
-            if length(t1) >1
-            
-                for i=2:length(t1)
+    phn= phi(pn);
+    t1=-phn + acos(-g(pn)./U(pn));  % time at which coordinates hit the walls 
+                                    % this expression always gives the correct result because U*cos(phi + t) + g >= 0.
 
-                    new_range = [0, t1(i), t2(i) ,2*pi];
-                    range = range_intersection(range, new_range); 
-                end
-                
-            end
-            
-            % Checking for all points to see if they lie in the interval.
-            % Bad idea as its very slow
-            
-            
+    t2=-phn + 2*pi - acos(-g(pn)./U(pn));
+
+
+    % t2 is always greater than t1. Using range intersection code
+    % instead of checking all hitting points
+
+    range = [0, t1(1), t2(1) ,2*pi];
+    if length(t1) >1
+
+        for i=2:length(t1)
+
+            new_range = [0, t1(i), t2(i) ,2*pi];
+            range = range_intersection(range, new_range); 
+        end
+
+    end
+
+    % Checking for all points to see if they lie in the interval.
+    % Bad idea as its very slow
+
+
 %             points_1 = zeros(length(t1),dimension);
 %             points_2 = zeros(length(t2),dimension);
-            
+
 %             logic_1 = zeros(length(t1),1);
 %             logic_2 = zeros(length(t1),1);
 %             
@@ -90,7 +90,7 @@ if any(pn)
 %             angle = [t1(logical(logic_1))',  t2(logical(logic_2))'];
 %             angle = sort(angle);
 %             
-            
+
 %             
 %             if mod(length(angle),2) == 0
 %                angle_slice = angle; 
@@ -100,14 +100,14 @@ if any(pn)
 %               
 %             end
 
-            angle_slice = range;                               
-            fn_eval = 1;   
-            
+    angle_slice = range;                               
+    fn_eval = 1;   
+
 
 
 else
     % default value in which we consider the entire ellipse
-    angle_slice=[]; % Only happens when the entire ellipse is in the box
+    angle_slice=[0, 2*pi]; % Only happens when the entire ellipse is in the box
     fn_eval = 1;
 end    
 

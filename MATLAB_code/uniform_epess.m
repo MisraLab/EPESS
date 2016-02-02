@@ -1,9 +1,11 @@
-function [xx, number_fn_evaluations, nu] = uniform_epess(xx, prior, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv)
+function [output, value, number_fn_evaluations, nu] = uniform_epess(xx, prior, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv, N, J)
 
 
 % This code computes the acceptable slices of the ellipse which lie within 
 % the box
-
+% N is the number of samples to be drawn uniformly per threshold level
+% J be the number of different thresholds per ellipse -- for each
+% threshhold level we will get a different interval
 
 
 D = numel(xx);
@@ -22,7 +24,8 @@ else
     end
     nu = reshape(prior'*randn(D, 1), size(xx));
 end
-hh = log(rand) + cur_log_like;
+
+
 
 
 
@@ -35,11 +38,11 @@ hh = log(rand) + cur_log_like;
 [angle_slice, fn_eval] = Wall_Hitting(xx, nu, F, g, EP_mean, dimension);
 
 % These give us the angle ranges for which the ellipse lies within the box
-if numel(angle_slice) == 0
-   angle_slice = [0, 2*pi];
-%    display('Entire ellipse');
-   
-end
+% if numel(angle_slice) == 0
+%    angle_slice = [0, 2*pi];
+% %    display('Entire ellipse');
+%    
+% end
 
 
 
@@ -48,16 +51,24 @@ end
 
 % Coming from the the wall hitting computations
 number_fn_evaluations = fn_eval;        
+output = zeros(N*J, dimension);
+evaluation = zeros(J, dimension);
 
-% Solve for interval where the likelihood is > a chosen threshold
-% Given by the roots of a Quartic equation
 
-% Getting the constants
-% Here we have EP_chol input as prior
+for j=1:J                             % J threshold levels
+
+    hh = log(rand) + cur_log_like;    % Random thresholds
+    % hh = log(j/J) + cur_log_like;   % Griding thresholds
+
+    % Solve for interval where the likelihood is > a chosen threshold
+    % Given by the roots of a Quartic equation
+
+    % Getting the constants
+    % Here we have EP_chol input as prior
 
     mat = EP_cov_inv - eye(dimension);
 
-    a0 = -hh + nu*mat*nu';
+    a0 = -2*hh + nu*mat*nu';
     a1 = -2*xx*EP_mean';
     a2 = -2*nu*EP_mean';
     a3 = 2*xx*mat*nu';
@@ -99,58 +110,113 @@ number_fn_evaluations = fn_eval;
     TOL=1e-10;
     np=abs(imag(roots))<TOL;
     roots = sort(real(roots(np)));
+    thresh_region = @(x)( a*(cos(x)^2) + b*cos(x)*sin(x) + c*sin(x) + d*cos(x) + e);
     
     
-    if numel(roots) == 0
+    % Finding the right angle ranges
+    
+    if numel(roots) == 0  % No real roots exist
         exact_range = angle_slice;
     else
     
-        % Region where the function is positive
-        point = roots(1) - 1;
-        thresh_region = @(x)( (a*x^4) + (b*x^3) + (c*x^2) + (d*x) + e);
-        value = thresh_region(point);
+        % Finding the root range
+        
+        ab = (roots >= -1).*(roots <= 1);
+        real_roots  = roots(logical(ab));
+        
+       if numel(real_roots) == 0  % No real roots between [-1,1]
+          exact_range = angle_slice;
+       
+       else
+           
+           theta = [];
+           for k=1:length(real_roots)
+               values = [ acos(real_roots(k)), 2*pi - acos(real_roots(k)) ];              
+               [c, p] = min([ abs(thresh_region(values(1))), abs(thresh_region(values(2)))] );              
+               theta = [theta, values(p)];
+           end
+           
+           if numel(theta) == 0
+            
+               range_1 = [0, 2*pi];
+               
+           else
+               theta = [0, sort(theta), 2*pi];
+               range_1 = []; 
+               for i=1:(length(theta)-1)
+                   point = (theta(i) + theta(i+1))/2;
+                   
+                   if thresh_region(point) > 0
+                       range_1 = [range_1, theta(i), theta(i+1)];
+                   end
+                 
+               end
+           end
 
-        roots = [-Inf, roots , Inf];
-        range_1 = [];
-        range_2 = [-1 1];
+          
+           exact_range = range_intersection(angle_slice, range_1);
+        
+       end
+       
+    end   
+    
+    
+%         % Region where the function is positive
+%         point = roots(1) - 1;
+%         thresh_region = @(x)( (a*x^4) + (b*x^3) + (c*x^2) + (d*x) + e);
+%         value = thresh_region(point);
+% 
+%         roots = [-Inf, roots , Inf];
+%         range_1 = [];
+%         range_2 = [-1 1];
+% 
+%         % Getting intersection of where the threshhold is greater with [-1,1]
+%         if value > 0
+%            for i=1:2:length(roots) - mod(length(roots),2)
+%                range_1 = [range_1 roots(i) roots(i+1)];
+%            end 
+% %         range_1
+%         else
+%             for i=2:2:length(roots) + (mod(length(roots),2)-1)
+%                range_1 = [range_1 roots(i) roots(i+1)];
+%             end 
+% %         range_1
+%         end
+        
+%         
+%         range = range_intersection(range_1,range_2); 
+%         slice_range = sort(acos(range));  % This gives in [0, pi]
+%         slice_range_1 = sort(2*pi - slice_range);
+%         slice_range_2 = [slice_range, slice_range_1];% This is in [0, 2*pi]
 
-        % Getting intersection of where the threshhold is greater with [-1,1]
-        if value > 0
-           for i=1:2:length(roots) - mod(length(roots),2)
-               range_1 = [range_1 roots(i) roots(i+1)];
-           end 
-%         range_1
-        else
-            for i=2:2:length(roots) + (mod(length(roots),2)-1)
-               range_1 = [range_1 roots(i) roots(i+1)];
-            end 
-%         range_1
+
+
+    
+    
+    
+% Here exact_range is the valid interval we want to sample from
+
+% Pick a function of interest to be evaluated over each interval
+% As an example, lets pick up mean
+
+evaluation(j, :) = first_moment(xx, nu, exact_range);
+
+
+% Pick N points uniformly form the given exact_range
+    for i=((j-1)*N+1):(j*N)
+        phi = simulate(exact_range);
+        xx_prop = xx*cos(phi) + nu*sin(phi); 
+        point = xx_prop + EP_mean;     
+        
+        if ( (F*point' + g) < 0)
+           error('Bug detected')
+           
         end
-        
-        
-        range = range_intersection(range_1,range_2); 
-        slice_range = sort(acos(range));  % This gives in [0, pi]
-        slice_range_1 = sort(2*pi - slice_range);
-        slice_range_2 = [slice_range, slice_range_1];% This is in [0, 2*pi]
-        exact_range = range_intersection(angle_slice, slice_range_2);
+        output(i, :) = xx_prop;
     end
     
-% Here exact_range is the intersection of 2 regions to a valid interval
-
-
-% Pick a point uniformly form the given exact_range
-
-phi = simulate(exact_range);
-xx_prop = xx*cos(phi) + nu*sin(phi);  
-
-
-point = xx_prop + EP_mean;
-
-% Just a check to see if the accepted point lies within the box
-if (F*point' + g >0)
-    xx = xx_prop;
-else
-    display('Error: point outside the box')
-end
-    
 end 
+
+value = mean(evaluation);
+
+end

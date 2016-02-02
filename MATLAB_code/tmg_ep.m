@@ -31,7 +31,7 @@ number_examples = 1; % Running the same example 30 times to get the avg. n_eff
 number_chains = 4; %4
 
 % Hyperparameters of the experiment
-inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
+% inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
 axis_interval = 2;  % length of the box interval along each dimension for axis-alligned method
 distance_box_placement = 10; % How far is the box placed form the origin along each dimension
 dimensions = [2]; % [2,10,50,100]
@@ -43,9 +43,7 @@ trace_plot_on_off = false;
 
 epess_on_off = false;
 epess_recycle_on_off = false;
-% Enter the number of points per ellipse
-N = 2;
-
+N_recycle = 2;
 naive_on_off = false;
 hmc_on_off = false;
 eff_epess_on_off = true;
@@ -78,7 +76,7 @@ neff_eff_epess = zeros(length(dimensions), number_examples,length(x));
 for dimension_index = 1:length(dimensions)
     
     dimension = dimensions(dimension_index);
-    inverse_wishart_df = dimension + 1.5; % Degrees of freedom of the inverse wishart
+%     inverse_wishart_df = dimension + 1.5; % Degrees of freedom of the inverse wishart
     
     
    for boundary_index = 1:length(x)
@@ -118,11 +116,11 @@ for dimension_index = 1:length(dimensions)
                
                 if epess_on_off == 1
                 
-                disp('EPESS') 
-                temp = tic;
-                [ samples, nu, number_fn_eval_epess ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol );
-               
-                time_epess = toc(temp);
+                    disp('EPESS') 
+                    temp = tic;
+                    [ samples, nu, number_fn_eval_epess ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol );
+
+                    time_epess = toc(temp);
                 
                 end
                 
@@ -169,11 +167,11 @@ for dimension_index = 1:length(dimensions)
                
                 if epess_recycle_on_off == 1
                 
-                disp('EPESS with recycling') 
-                temp = tic;
-                [ samples_recycle, number_fn_eval_epess_recycle ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, N );
-               
-                time_epess = toc(temp);
+                    disp('EPESS with recycling') 
+                    temp = tic;
+                    [ samples_recycle, number_fn_eval_epess_recycle ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, N_recycle );
+
+                    time_epess = toc(temp);
                 
                 end
                 
@@ -185,31 +183,31 @@ for dimension_index = 1:length(dimensions)
 
                 if hmc_on_off == 1
                 
-                cov=true;  % we are specifying the covariance matrix
-                 % Passing mu and Sigma -- the mean and covariance for tmg
-                 % F and g denote the constraint matrix: Expressing all the
-                 % constraints as F*X + g >= 0
-                 
-                 % initial point is tke to be in the middle of the box. For
-                 % polyhedral constraints -- need to sepcify the initial
-                 % point
-                 
-                disp('Exact HMC') 
-                temp = tic; 
-                samples_exact = zeros(number_samples , dimension, number_chains);
-                number_fn_evaluations = 1;
-                initial_point = (lB+uB)/2;
-                g = [-lB;uB];
-                F = vertcat(eye(dimension), -eye(dimension));
-                
-                
-                for chain_index = 1:number_chains
-                     
-                   [ samples_exact(:,:,chain_index), number_fn_eval_hmc(chain_index) ] = HMC_exact(F, g, Sigma, mu, cov, number_samples, initial_point);
-                
-                end
-                number_fn_eval_exact_hmc = sum(number_fn_eval_hmc);
-                time_exact_hmc = toc(temp);
+                    cov=true;  % we are specifying the covariance matrix
+                     % Passing mu and Sigma -- the mean and covariance for tmg
+                     % F and g denote the constraint matrix: Expressing all the
+                     % constraints as F*X + g >= 0
+
+                     % initial point is tke to be in the middle of the box. For
+                     % polyhedral constraints -- need to sepcify the initial
+                     % point
+
+                    disp('Exact HMC') 
+                    temp = tic; 
+                    samples_exact = zeros(number_samples , dimension, number_chains);
+                    number_fn_evaluations = 1;
+                    initial_point = (lB+uB)/2;
+                    g = [-lB;uB];
+                    F = vertcat(eye(dimension), -eye(dimension));
+
+
+                    for chain_index = 1:number_chains
+
+                       [ samples_exact(:,:,chain_index), number_fn_eval_hmc(chain_index) ] = HMC_exact(F, g, Sigma, mu, cov, number_samples, initial_point);
+
+                    end
+                    number_fn_eval_exact_hmc = sum(number_fn_eval_hmc);
+                    time_exact_hmc = toc(temp);
 
                 end
                 
@@ -244,6 +242,10 @@ for dimension_index = 1:length(dimensions)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 if eff_epess_on_off == 1
                 
+                % N is the number of points per slice
+                % J is the number of slices per ellipse
+                N = 1;   
+                J = 1;
                 EP_cov_inv = inv(EP_covariance);
                 g = [-lB;uB];
                 F = vertcat(eye(dimension), -eye(dimension));
@@ -255,10 +257,20 @@ for dimension_index = 1:length(dimensions)
                 
                 %[ samples_eff_epess,nu_eff_epess, number_fn_eval_eff_epess ] = epessSampler_tmg( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g);
                 
+                
+                
                 %% This implements the idea of uniform sampling along the
                 % "acceptable" angle slices
                 
-                [ samples_eff_epess, nu_eff_epess, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g, EP_cov_inv);
+                [ samples_eff_epess, fn, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g, EP_cov_inv, N, J);
+                mean_fn_eval = mean(fn) + EP_mean;
+                display(mean_fn_eval, 'Mean')
+                
+                % Getting the trailing means for plotting the convergence
+                % rates to EP_mean
+%                 
+%                 display([cummean(samples_eff_epess(:, :, 1), 'Mean of samples'])
+%                 display([cummean(fn, 1), 'Mean from slices'])
                 time_eff_epess = toc(temp);
                 
                 end
@@ -322,12 +334,12 @@ for dimension_index = 1:length(dimensions)
                 neff_ess(dimension_index, example_index,boundary_index) = mpsrf(samples_naive)/number_fn_eval_naive;
                 neff_exact_hmc(dimension_index, example_index,boundary_index) = mpsrf(samples_exact)/number_fn_eval_exact_hmc;
                 neff_eff_epess(dimension_index, example_index,boundary_index) = mpsrf(samples_eff_epess)/number_fn_eval_eff_epess;
-
-                mpsrf(samples)
-                mpsrf(samples_recycle)
-                mpsrf(samples_naive)
-                mpsrf(samples_exact)
-                mpsrf(samples_eff_epess)
+% 
+%                 display(mpsrf(samples), 'n_eff EPESS')
+%                 display(samples_recycle, 'n_eff EPESS with recycling ')
+%                 display(mpsrf(samples_naive), 'n_eff Naive')
+%                 display(mpsrf(samples_exact), 'n_eff Exact HMC' )
+%                 display(mpsrf(samples_eff_epess), 'n_eff Efficient EPESS') 
 %                 
 %                 subplot(1,3,3);
 %                 ezmeshc(@(x,y)(logPdfTmg([x,y], mu, chol_Sigma, C, lB, uB )) , [lB(1)-0.5 , uB(1)+0.5, lB(2), uB(2)] , grid_size)
