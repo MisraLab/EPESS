@@ -110,7 +110,7 @@ for dimension_index = 1:length(dimensions)
                 % neff_max = max(neff(:, :, :),[],3)
                 % neff_min = min(neff(:, :, :),[],3)
                 
-                empirical_KL_divergences = arrayfun(@(chain_index)(empiricalKLDivergence( samples(:,:,chain_index), mixture_means, mixture_covariances, mixture_weights, KL_accuracy_number_samples, dimension )) , 1:number_chains)
+                empirical_KL_divergences = arrayfun(@(chain_index)(empiricalKLDivergenceSMG( samples(:,:,chain_index), mixture_means, mixture_covariances, mixture_weights, KL_accuracy_number_samples, dimension )) , 1:number_chains)
                 number_modes_hit = arrayfun(@(chain_index)(numberModesHit( samples(:,:,chain_index), mixture_means, hit_radius)), 1:number_chains)
  
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
