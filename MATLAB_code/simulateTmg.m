@@ -12,7 +12,8 @@ function [ mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_int
             lB = [x(boundary_index);-1]; 
             uB = [x(boundary_index)+1;1];
        else 
-            Sigma = (1-lambda) *1 * eye(dimension) + lambda* iwishrnd(eye(dimension), inverse_wishart_df);
+%             Sigma = (1-lambda) *1 * eye(dimension) + lambda* iwishrnd(eye(dimension), inverse_wishart_df);
+            Sigma = eye(dimension);
             lB = (distance_box_placement).* ones(dimension,1);
             uB = lB + axis_interval.*ones(dimension, 1);     
        end

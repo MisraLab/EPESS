@@ -100,7 +100,7 @@ output = zeros(N, dimension);
 % errors
 
 
-tol = (10^-3);
+tol = (10^-10);
 
 % Slice sampling loop
 
@@ -119,8 +119,7 @@ for counter = 1:N
         cur_log_like = log_like_fn(xx_prop, varargin{:});
         number_fn_evaluations = number_fn_evaluations + 1;
         if cur_log_like > hh
-            % New point is on slice, ** EXIT LOOP **
-            output(counter, :) = xx_prop;
+            % New point is on slice, ** EXIT LOOP **           
             break;
         end
         % Shrink slice to rejected point
@@ -130,6 +129,7 @@ for counter = 1:N
         elseif phi < -tol
             phi_min = phi;              
         else  % (Truncating the slice shrinkage here and resetting to the current point)
+            xx_prop = NaN(1, dimension);
             break;
         end
         
@@ -137,6 +137,7 @@ for counter = 1:N
         phi = rand*(phi_max - phi_min) + phi_min;
     end
     
+    output(counter, :) = xx_prop;
 end
 
 % Output gives N sample points
