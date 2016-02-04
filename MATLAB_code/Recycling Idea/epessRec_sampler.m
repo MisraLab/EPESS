@@ -33,7 +33,7 @@ function [ samples,number_fn_evaluations ] = epessRec_sampler( number_samples , 
             
             if isempty(output) == 0
                [m,n] = size(output);
-               k = unidrnd(m); 
+               k = 1;%unidrnd(m); 
                next_point = output(k, :);
                samples(sample_index:(sample_index + m -1),:,chain_index) = output;
 

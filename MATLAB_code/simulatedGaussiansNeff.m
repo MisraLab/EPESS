@@ -22,8 +22,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hyperparameters that are constant for all alphas, dimensions,...
-number_mixtures = 3;
-number_samples = 2000; % Eventually use 10000
+number_mixtures = 6;
+number_samples = 1000; % Eventually use 10000
 number_examples = 1; % 20
 number_chains = 4; %4
 inverse_wishart_weight = 0; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
@@ -31,20 +31,22 @@ axis_interval = 15;  % Maximum distance of the mean of a simulated gaussian from
 min_distance_between_simulated_means = axis_interval/(number_mixtures+1); % This ensures that the balls centered on the mean can easy sit in the space
 KL_accuracy_number_samples = 100000; % Number of samples used in empirical KL calculation (controls the accuracy)
 hit_radius = 1; % Radius around a mode which is considered as a "hit"
+number_recycles = 10;
 
 % Decide which algorithm to run
 normal_true_T_false = true; % True if using normal, false if using student's t
 students_t_df = 0.5; % The degrees of freedom of the student's t
 run_epess = true;
+run_recycled_epess = true;
 run_hmc = false;
 
 % Hyperparameters for plotting
-plotting_on_off = true; % True if plotting, false otherwise
+plotting_on_off = false; % True if plotting, false otherwise
 plot_axis_interval = 1.5*axis_interval; % The radius of the plot. Made larger than the radius of the mixture means so that can show what happens for a gaussian that sits on the boundary
 grid_size = 100; % Number of points to plot along each axis
 
 % Hyperparameters that change
-alphas = [1,2]; % [0.5,1,2,5,10,20]
+alphas = [1]; % [0.5,1,2,5,10,20]
 dimensions = [2]; % [2,10,50,100]
 
 % Effective Sample Size
@@ -58,7 +60,7 @@ for dimension_index = 1:length(dimensions)
     inverse_wishart_df = dimension + 1.5; % Degrees of freedom of the inverse wishart
     
     for example_index = 1:number_examples
-        example_index
+        example_index;
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % 1. Simulate the mixture of Gaussians
@@ -82,7 +84,7 @@ for dimension_index = 1:length(dimensions)
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                 if normal_true_T_false
-                    [ samples, number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol );
+                    [ samples, nu ,number_fn_evaluations  ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol );
                     pseudoLogLikelihood = @(x)( logLikelihood(x) - logGaussPdfChol(x', EP_mean', EP_chol));
                 else
                     [ samples, number_fn_evaluations ] = tEpessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol , students_t_df);
@@ -110,8 +112,8 @@ for dimension_index = 1:length(dimensions)
                 % neff_max = max(neff(:, :, :),[],3)
                 % neff_min = min(neff(:, :, :),[],3)
                 
-                empirical_KL_divergences = arrayfun(@(chain_index)(empiricalKLDivergenceSMG( samples(:,:,chain_index), mixture_means, mixture_covariances, mixture_weights, KL_accuracy_number_samples, dimension )) , 1:number_chains)
-                number_modes_hit = arrayfun(@(chain_index)(numberModesHit( samples(:,:,chain_index), mixture_means, hit_radius)), 1:number_chains)
+                % empirical_KL_divergences = arrayfun(@(chain_index)(empiricalKLDivergenceSMG( samples(:,:,chain_index), mixture_means, mixture_covariances, mixture_weights, KL_accuracy_number_samples, dimension )) , 1:number_chains)
+                % number_modes_hit = arrayfun(@(chain_index)(numberModesHit( samples(:,:,chain_index), mixture_means, hit_radius)), 1:number_chains)
  
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 5. Plot distributions (if 2 dimensional)
@@ -122,6 +124,20 @@ for dimension_index = 1:length(dimensions)
             end
         end
         
+            
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % 5b. Recycled EPESS
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        if run_recycled_epess
+            [ samples_recycled, number_fn_evaluations_recycled ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, number_recycles );
+        end
+        empirical_KL_divergences = arrayfun(@(chain_index)(empiricalKLDivergenceSMG( samples_recycled(:,:,chain_index), mixture_means, mixture_covariances, mixture_weights, KL_accuracy_number_samples, dimension )) , 1:number_chains)
+        
+        % Compare output epess to recycled epess
+        disp(['EPESS: ', num2str(mpsrf(samples((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations)])
+        disp(['Recycled EPESS: ', num2str(mpsrf(samples_recycled((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations_recycled)])
+        disp(['Recycled EPESS / EPESS: ',num2str((mpsrf(samples_recycled((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations_recycled)/(mpsrf(samples((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations))])
             
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % 6. HMC Comparison
