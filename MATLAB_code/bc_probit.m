@@ -32,8 +32,8 @@ true_on_off = false;     % Approximation to true density % for KL part
 epess_on_off = false;
 epess_recycle_on_off = false;
 N_recycle = 10;           % Number of samples per slice
-ess_on_off = true;
-ess_recycle_on_off = false;
+ess_on_off = false;
+ess_recycle_on_off = true;
 hmc_on_off = false;
 
 
@@ -59,7 +59,7 @@ x = zscore(x);
 
 % % Log lik fn to be used in ESS, EPSSS 
 
-logLikelihood = @(z)( loglikbc(z, data));
+logLikelihood = @(z)( loglikbc(z, N, x, y));
 
 
 
@@ -111,24 +111,24 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3. ESS and Recycled ESS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%     if ess_on_off
-%         N_recycle = 1;
-%         initial_point = zeros(dimension,1)';
-%         [ samples_ess, n_fn_eval_ess ] = ess_sampler( number_samples , dimension, number_chains, logLikelihood, Sigma_prior, N_recycle, initial_point);
-%
-%         neff_ess(dimension_index, 1) = mpsrf(samples_ess)/n_fn_eval_ess
-%         display(mpsrf(samples_ess), 'n_eff: ESS')
-%     end
-%
-%     if ess_recycle_on_off
-%         N_recycle;        % Denotes the number of samples per slice
-%         initial_point = zeros(dimension,1)';
-%         [ samples_recycled, n_fn_eval_ess_recycled ] = ess_sampler( number_samples , dimension, number_chains, logLikelihood, Sigma_prior, N_recycle, initial_point);
-%
-%         neff_ess(dimension_index, 1) = mpsrf(samples_recycled)/n_fn_eval_ess_recycled
-%         display(mpsrf(samples_recycled), 'n_eff: ESS with recycling ')
-%     end
+
+    if ess_on_off
+        N_recycle = 1;
+        initial_point = zeros(dimension,1)';
+        [ samples_ess, n_fn_eval_ess ] = ess_sampler( number_samples , dimension, number_chains, logLikelihood, priorSigma, N_recycle, initial_point);
+
+        neff_ess(dimension_index, 1) = mpsrf(samples_ess)/n_fn_eval_ess
+        display(mpsrf(samples_ess), 'n_eff: ESS')
+    end
+
+    if ess_recycle_on_off
+        N_recycle;        % Denotes the number of samples per slice
+        initial_point = zeros(dimension,1)';
+        [ samples_recycled, n_fn_eval_ess_recycled ] = ess_sampler( number_samples , dimension, number_chains, logLikelihood, priorSigma, N_recycle, initial_point);
+
+        neff_ess(dimension_index, 1) = mpsrf(samples_recycled)/n_fn_eval_ess_recycled
+        display(mpsrf(samples_recycled), 'n_eff: ESS with recycling ')
+    end
 
 
 

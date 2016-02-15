@@ -1,7 +1,6 @@
 function [ samples, number_fn_evaluations ] = ess_sampler( number_samples , dimension, number_chains, logLikelihood, Sigma_prior, N_recycle, initial_point) %axis_interval
 %Outputs samples from ess and recycled ess
 
-%     pseudoLogLikelihoodShifted = @(x)( logLikelihood(x+EP_mean) - logGaussPdfChol(x', zeros(dimension,1), EP_chol));
 
     % Initialize
     samples = zeros(number_samples , dimension, number_chains);
@@ -25,6 +24,7 @@ function [ samples, number_fn_evaluations ] = ess_sampler( number_samples , dime
             
             if N_recycle == 1
                 for sample_index = 2 : number_samples
+                    sample_index
                     [samples(sample_index,:,chain_index), cur_log_like , cur_number_fn_evaluations, nu] = elliptical_slice( samples(sample_index-1,:,chain_index), prior_chol, logLikelihood, cur_log_like);
                     number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations;
                 end
@@ -33,6 +33,7 @@ function [ samples, number_fn_evaluations ] = ess_sampler( number_samples , dime
                 
                 sample_index = 2;
                 while sample_index < floor((number_samples-2)/N_recycle)*N_recycle
+                    sample_index
                     
                     if sample_index == 2
                         next_point = samples(1,:,chain_index);
