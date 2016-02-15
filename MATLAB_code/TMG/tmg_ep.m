@@ -27,10 +27,10 @@
 
 % We want to run EPESS for 100000 samples and use it as the "true"
 % distribution for computing KL divergence
-number_samples_exact = 1000;
+number_samples_exact = 10000;
 
 % MCMC parameters
-number_samples = 1000; % Eventually use 10000
+number_samples = 100000; % Eventually use 10000
 number_examples = 1; % Running the same example 30 times to get the avg. n_eff
 number_chains = 4; %4
 
@@ -38,20 +38,20 @@ number_chains = 4; %4
 % inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
 axis_interval = 2;  % length of the box interval along each dimension for axis-alligned method
 distance_box_placement = 10; % How far is the box placed form the origin along each dimension
-dimensions = [2]; % [2,10,50,100]
+dimensions = [100]; % [2,10,50,100]
 
 
 % Hyperparameters for plotting
 % True if plotting, false otherwise
-plotting_on_off = true; 
+plotting_on_off = false; 
 trace_plot_on_off = false;
 
-true_on_off = true;     % Approximation to true density
-epess_on_off = true;
-epess_recycle_on_off = true;
+true_on_off = false;     % Approximation to true density
+epess_on_off = false;
+epess_recycle_on_off = false;
 N_recycle = 2;
-naive_on_off = true;
-hmc_on_off = true;
+naive_on_off = false;
+hmc_on_off = false;
 eff_epess_on_off = true;
 
 plot_axis_interval = 1.5*(axis_interval+distance_box_placement); % The radius of the plot. Made larger than the radius of the mixture means so that can show what happens for a gaussian that sits on the boundary
@@ -60,7 +60,7 @@ grid_size = 200; % Number of points to plot along each axis
 
 % Gridding up placement of the left boundry (denoted by x)
 % % x = linspace(10,10,10);
-x=10;
+x=50;
 
 
 % Effective Sample Size, We will average over the examples
@@ -256,8 +256,8 @@ for dimension_index = 1:length(dimensions)
                 % N is the number of points per slice
                 % J is the number of slices per ellipse
                 
-                N = 1;
-                J = 1;
+                N = 5;
+                J = 100;
                 EP_cov_inv = inv(EP_covariance);
                 g = [-lB;uB];
                 F = vertcat(eye(dimension), -eye(dimension));
@@ -343,13 +343,13 @@ for dimension_index = 1:length(dimensions)
                 
             end
             
-            if hmc_on_off == 1
+            if naive_on_off == 1
                 neff_ess(dimension_index, example_index,boundary_index) = mpsrf(samples_naive)/number_fn_eval_naive;
                 display(mpsrf(samples_naive), 'n_eff: Naive')
                 
             end
             
-            if naive_on_off == 1
+            if hmc_on_off == 1
                 neff_exact_hmc(dimension_index, example_index,boundary_index) = mpsrf(samples_exact)/number_fn_eval_exact_hmc;
                 display(mpsrf(samples_exact), 'n_eff: Exact HMC' )
                 
@@ -379,43 +379,43 @@ for dimension_index = 1:length(dimensions)
         % i.e. averaging over different exxamples
         
         % Load samples_true for Emperical KL
-        load('true_samples.mat')
-        samples_true_KL = vertcat(samples_true(number_samples/2:number_samples,:,1),samples_true(number_samples/2:number_samples,:,2),samples_true(number_samples/2:number_samples,:,3),samples_true(number_samples/2:number_samples,:,4));
+%         load('true_samples.mat')
+%         samples_true_KL = vertcat(samples_true(number_samples/2:number_samples,:,1),samples_true(number_samples/2:number_samples,:,2),samples_true(number_samples/2:number_samples,:,3),samples_true(number_samples/2:number_samples,:,4));
         
         if epess_on_off ==1
             mean_neff_epess(dimension_index,boundary_index) = mean(neff_epess(dimension_index,:,boundary_index));
             display(mean_neff_epess,'n_eff/function evaluation: EPESS' )
-            samples_KL = vertcat(samples(number_samples/2:number_samples,:,1),samples(number_samples/2:number_samples,:,2),samples(number_samples/2:number_samples,:,3),samples(number_samples/2:number_samples,:,4));
-            display(empiricalKLDivergence(samples_true_KL(), samples_KL(number_samples/2:number_samples,:)), 'Emperical KL: EPESS')
+%             samples_KL = vertcat(samples(number_samples/2:number_samples,:,1),samples(number_samples/2:number_samples,:,2),samples(number_samples/2:number_samples,:,3),samples(number_samples/2:number_samples,:,4));
+%             display(empiricalKLDivergence(samples_true_KL(), samples_KL(number_samples/2:number_samples,:)), 'Emperical KL: EPESS')
         end
         
         if epess_recycle_on_off == 1
             mean_neff_epess_recycle(dimension_index,boundary_index) = mean(neff_epess_recycle(dimension_index,:,boundary_index));
             display(mean_neff_epess_recycle, 'n_eff/function evaluation: EPESS with recyclying')
-            samples_recycle_KL = vertcat(samples_recycle(number_samples/2:number_samples,:,1),samples_recycle(number_samples/2:number_samples,:,2),samples_recycle(number_samples/2:number_samples,:,3),samples_recycle(number_samples/2:number_samples,:,4));
-            display(empiricalKLDivergence(samples_true_KL, samples_recycle_KL(number_samples/2:number_samples,:)), 'Emperical KL: EPESS with recycling')
+%             samples_recycle_KL = vertcat(samples_recycle(number_samples/2:number_samples,:,1),samples_recycle(number_samples/2:number_samples,:,2),samples_recycle(number_samples/2:number_samples,:,3),samples_recycle(number_samples/2:number_samples,:,4));
+%             display(empiricalKLDivergence(samples_true_KL, samples_recycle_KL(number_samples/2:number_samples,:)), 'Emperical KL: EPESS with recycling')
         end
         
         if naive_on_off == 1
             mean_neff_ess(dimension_index,boundary_index) = mean(neff_ess(dimension_index,:,boundary_index));
             display(mean_neff_ess, 'n_eff/function evaluation: Naive ESS')
-            samples_naive_KL = vertcat(samples_naive(number_samples/2:number_samples,:,1),samples_naive(number_samples/2:number_samples,:,2),samples_naive(number_samples/2:number_samples,:,3),samples_naive(number_samples/2:number_samples,:,4));
-            display(empiricalKLDivergence(samples_true_KL, samples_naive_KL(number_samples/2:number_samples,:)), 'Emperical KL: Naive ESS')
+%             samples_naive_KL = vertcat(samples_naive(number_samples/2:number_samples,:,1),samples_naive(number_samples/2:number_samples,:,2),samples_naive(number_samples/2:number_samples,:,3),samples_naive(number_samples/2:number_samples,:,4));
+%             display(empiricalKLDivergence(samples_true_KL, samples_naive_KL(number_samples/2:number_samples,:)), 'Emperical KL: Naive ESS')
         end
         
         if hmc_on_off == 1
             mean_neff_exact_hmc(dimension_index,boundary_index) = mean(neff_exact_hmc(dimension_index,:,boundary_index));
             display(mean_neff_exact_hmc, 'n_eff/function evaluation: Exact HMC')
-            samples_exact_KL = vertcat(samples_exact(number_samples/2:number_samples,:,1),samples_exact(number_samples/2:number_samples,:,2),samples_exact(number_samples/2:number_samples,:,3),samples_exact(number_samples/2:number_samples,:,4));
-            display(empiricalKLDivergence(samples_true_KL, samples_exact_KL(number_samples/2:number_samples,:)), 'Emperical KL: Exact HMC')
+%             samples_exact_KL = vertcat(samples_exact(number_samples/2:number_samples,:,1),samples_exact(number_samples/2:number_samples,:,2),samples_exact(number_samples/2:number_samples,:,3),samples_exact(number_samples/2:number_samples,:,4));
+%             display(empiricalKLDivergence(samples_true_KL, samples_exact_KL(number_samples/2:number_samples,:)), 'Emperical KL: Exact HMC')
         end
         
         
         if eff_epess_on_off == 1
             mean_neff_eff_epess(dimension_index,boundary_index) = mean(neff_eff_epess(dimension_index,:,boundary_index));
             display(mean_neff_eff_epess, 'n_eff/function evaluation: Efficient EPESS')
-            samples_eff_epess_KL = vertcat(samples_eff_epess(number_samples/2:number_samples,:,1),samples_eff_epess(number_samples/2:number_samples,:,2),samples_eff_epess(number_samples/2:number_samples,:,3),samples_eff_epess(number_samples/2:number_samples,:,4));
-            display(empiricalKLDivergence(samples_true_KL, samples_eff_epess_KL(number_samples/2:number_samples,:)), 'Emperical KL: Efficient EPESS')
+%             samples_eff_epess_KL = vertcat(samples_eff_epess(number_samples/2:number_samples,:,1),samples_eff_epess(number_samples/2:number_samples,:,2),samples_eff_epess(number_samples/2:number_samples,:,3),samples_eff_epess(number_samples/2:number_samples,:,4));
+%             display(empiricalKLDivergence(samples_true_KL, samples_eff_epess_KL(number_samples/2:number_samples,:)), 'Emperical KL: Efficient EPESS')
         end
         
         

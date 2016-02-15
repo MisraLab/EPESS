@@ -1,6 +1,6 @@
 %function [neff_hmc] = stan_hmc(number_mixtures,dimension ,mixture_weights,mixture_means,mixture_covariances, number_chains,number_samples)
 
-function [neff_hmc, sims] = stan_hmc(number_mixtures,dimension ,mixture_weights,mixture_means,mix_cov, number_chains,number_samples)
+function [neff_hmc, sims] = stanHmc(number_mixtures,dimension ,mixture_weights,mixture_means,mix_cov, number_chains,number_samples)
 
 
 %% For a mixture of gaussians, this code samples from HMC using Stan.

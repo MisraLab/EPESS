@@ -23,13 +23,13 @@
 
 % Hyperparameters that are constant for all alphas, dimensions,...
 number_mixtures = 6;
-number_samples = 1000; % Eventually use 10000
+number_samples = 500; % Eventually use 10000
 number_examples = 1; % 20
 number_chains = 4; %4
 inverse_wishart_weight = 0; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
 axis_interval = 15;  % Maximum distance of the mean of a simulated gaussian from the origin
 min_distance_between_simulated_means = axis_interval/(number_mixtures+1); % This ensures that the balls centered on the mean can easy sit in the space
-KL_accuracy_number_samples = 100000; % Number of samples used in empirical KL calculation (controls the accuracy)
+KL_accuracy_number_samples = 10000; % Number of samples used in empirical KL calculation (controls the accuracy)
 hit_radius = 1; % Radius around a mode which is considered as a "hit"
 number_recycles = 10;
 
@@ -37,8 +37,9 @@ number_recycles = 10;
 normal_true_T_false = true; % True if using normal, false if using student's t
 students_t_df = 0.5; % The degrees of freedom of the student's t
 run_epess = true;
-run_recycled_epess = true;
-run_hmc = true;
+run_recycled_epess = false;
+run_hmc = false;
+run_emh = true;
 
 % Hyperparameters for plotting
 plotting_on_off = false; % True if plotting, false otherwise
@@ -132,13 +133,13 @@ for dimension_index = 1:length(dimensions)
         if run_recycled_epess
             [ samples_recycled, number_fn_evaluations_recycled ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, number_recycles );
         end
-        empirical_KL_divergences = arrayfun(@(chain_index)(empiricalKLDivergenceSMG( samples_recycled(:,:,chain_index), mixture_means, mixture_covariances, mixture_weights, KL_accuracy_number_samples, dimension )) , 1:number_chains)
-        
-        % Compare output epess to recycled epess
-        disp(['EPESS: ', num2str(mpsrf(samples((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations)])
-        disp(['Recycled EPESS: ', num2str(mpsrf(samples_recycled((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations_recycled)])
-        disp(['Recycled EPESS / EPESS: ',num2str((mpsrf(samples_recycled((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations_recycled)/(mpsrf(samples((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations))])
-            
+%         empirical_KL_divergences = arrayfun(@(chain_index)(empiricalKLDivergenceSMG( samples_recycled(:,:,chain_index), mixture_means, mixture_covariances, mixture_weights, KL_accuracy_number_samples, dimension )) , 1:number_chains)
+%         
+%         % Compare output epess to recycled epess
+%         disp(['EPESS: ', num2str(mpsrf(samples((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations)])
+%         disp(['Recycled EPESS: ', num2str(mpsrf(samples_recycled((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations_recycled)])
+%         disp(['Recycled EPESS / EPESS: ',num2str((mpsrf(samples_recycled((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations_recycled)/(mpsrf(samples((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations))])
+%             
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % 6. HMC Comparison
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -149,8 +150,22 @@ for dimension_index = 1:length(dimensions)
             %neff_hmc(dimension_index, example_index)=stan_hmc(number_mixtures,dimension,mixture_weights,mixture_means,mixture_covariances,number_chains,number_samples);
 
             [neff_hmc(dimension_index, example_index), sims]=stanHmc(number_mixtures,dimension,mixture_weights,mixture_means,mix_cov,number_chains,number_samples);
-            % neff_hmc
-                
+            neff_hmc
+               
+        end
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % 6. MH with EP Proposals
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        if run_emh
+            
+            [samples_emh, number_fn_evaluations_emh, avg_acc_ratio] = mh_gprop(EP_mean, EP_covariance, logLikelihood, number_samples, number_chains);
+            neff_emh = mpsrf(samples_emh)/number_fn_evaluations_emh;
+            
+        end
+        
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % 7. Plotting HMC vs reults for a given alpha
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -171,7 +186,7 @@ for dimension_index = 1:length(dimensions)
 %                 title('HMC Samples')
 
                 % trace plots
-        end
+       
     end
 end
 

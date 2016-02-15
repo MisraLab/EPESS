@@ -69,7 +69,6 @@ hh = log(rand) + cur_log_like;
 
 
 
-
 % Set up a bracket of angles and pick a first proposal.
 % "phi = (theta'-theta)" is a change in angle.
 if angle_range <= 0
