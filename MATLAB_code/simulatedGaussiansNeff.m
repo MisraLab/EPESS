@@ -47,7 +47,7 @@ grid_size = 100; % Number of points to plot along each axis
 
 % Hyperparameters that change
 alphas = [1]; % [0.5,1,2,5,10,20]
-dimensions = [2]; % [2,10,50,100]
+dimensions = [2,10,50,100]; % [2,10,50,100]
 
 % Effective Sample Size
 neff = zeros(length(dimensions), length(alphas), number_examples);
