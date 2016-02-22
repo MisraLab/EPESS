@@ -41,7 +41,8 @@ function [ samples, fn, number_fn_evaluations ] = uniformEpess( number_samples ,
 
                        % Unformly choosing the next point 
                        % to continue the Markov Chain
-                       k = unidrnd(N*J); 
+                       % k = unidrnd(N*J); 
+                       k=1;
                        next_point = output(k, :);
                     end
 

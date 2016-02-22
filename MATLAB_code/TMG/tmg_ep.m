@@ -30,7 +30,7 @@
 number_samples_exact = 10000;
 
 % MCMC parameters
-number_samples = 100000; % Eventually use 10000
+number_samples = 1000; % Eventually use 10000
 number_examples = 1; % Running the same example 30 times to get the avg. n_eff
 number_chains = 4; %4
 
@@ -38,21 +38,23 @@ number_chains = 4; %4
 % inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
 axis_interval = 2;  % length of the box interval along each dimension for axis-alligned method
 distance_box_placement = 10; % How far is the box placed form the origin along each dimension
-dimensions = [100]; % [2,10,50,100]
+dimensions = [2]; % [2,10,50,100]
 
 
 % Hyperparameters for plotting
 % True if plotting, false otherwise
-plotting_on_off = false; 
+plotting_on_off = true; 
 trace_plot_on_off = false;
 
 true_on_off = false;     % Approximation to true density
-epess_on_off = false;
-epess_recycle_on_off = false;
+epess_on_off = true;
+epess_recycle_on_off = true;
 N_recycle = 2;
-naive_on_off = false;
-hmc_on_off = false;
+naive_on_off = true;
+hmc_on_off = true;
 eff_epess_on_off = true;
+emh_on_off = true;
+
 
 plot_axis_interval = 1.5*(axis_interval+distance_box_placement); % The radius of the plot. Made larger than the radius of the mixture means so that can show what happens for a gaussian that sits on the boundary
 grid_size = 200; % Number of points to plot along each axis
@@ -60,7 +62,7 @@ grid_size = 200; % Number of points to plot along each axis
 
 % Gridding up placement of the left boundry (denoted by x)
 % % x = linspace(10,10,10);
-x=50;
+x=100;
 
 
 % Effective Sample Size, We will average over the examples
@@ -69,6 +71,7 @@ neff_epess_recycle = zeros(length(dimensions), number_examples,length(x));
 neff_ess = zeros(length(dimensions), number_examples,length(x));
 neff_exact_hmc = zeros(length(dimensions), number_examples,length(x));
 neff_eff_epess = zeros(length(dimensions), number_examples,length(x));
+neff_emh = zeros(length(dimensions), number_examples,length(x));
 
 
 % time_epess = zeros(length(dimensions), number_examples);
@@ -111,7 +114,7 @@ for dimension_index = 1:length(dimensions)
             % Use epmgp for general polyhedrons and axisepmgp for
             % axis alligned boxes.
             
-            %               [logZ, mu_ep , Sigma_ep] = epmgp(mu,Sigma,C,lB,uB);
+            % [logZ, mu_ep , Sigma_ep] = epmgp(mu,Sigma,C,lB,uB);
             [logZ, EP_mean , EP_covariance] = axisepmgp(mu,Sigma,lB,uB);
             EP_mean = EP_mean';
             EP_chol = chol(EP_covariance);
@@ -227,8 +230,7 @@ for dimension_index = 1:length(dimensions)
             % 5. Naive ESS -- Similar to HMC
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
-            if naive_on_off == 1
-                %
+            if naive_on_off == 1               
                 disp('Naive ESS')
                 temp = tic;
                 naive_mean = zeros(dimension, 1);
@@ -240,7 +242,7 @@ for dimension_index = 1:length(dimensions)
                 
                 % The other method of just accepting the slices that lie
                 % within that ellipse
-%                 [ samples_naive, nu_naive, number_fn_eval_naive ] = epessSampler_naive( number_samples , dimension, number_chains, naive_mean', naive_chol, F, g, ((lB+uB)/2)') ;
+                % [ samples_naive, nu_naive, number_fn_eval_naive ] = epessSampler_naive( number_samples , dimension, number_chains, naive_mean', naive_chol, F, g, ((lB+uB)/2)') ;
                 time_ess = toc(temp);
                 
                 
@@ -257,7 +259,7 @@ for dimension_index = 1:length(dimensions)
                 % J is the number of slices per ellipse
                 
                 N = 5;
-                J = 100;
+                J = 1;
                 EP_cov_inv = inv(EP_covariance);
                 g = [-lB;uB];
                 F = vertcat(eye(dimension), -eye(dimension));
@@ -289,18 +291,30 @@ for dimension_index = 1:length(dimensions)
             
             
             
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % 7. EP-MH
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            if emh_on_off == 1
+                
+                [samples_emh, number_fn_eval_emh, avg_acc_ratio] = mh_gprop(EP_mean, EP_covariance, logLikelihood, number_samples, number_chains);
+                                
+            end
+            
+            
+            
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % 6. Plotting
+            % 8. Plotting
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             if plotting_on_off == 1
                 
-                subplot(1,5,1);
+                subplot(1,6,1);
                 plot(samples(:,1), samples(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('EP-ESS')
                 
-                subplot(1,5,2);
+                subplot(1,6,2);
                 plot(samples_recycle(:,1), samples_recycle(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('EP-ESS Recycle')
@@ -311,21 +325,27 @@ for dimension_index = 1:length(dimensions)
                 %                 title('EP-ESS Samples')
                 %                 hold off
                 %
-                subplot(1,5,3);
+                subplot(1,6,3);
                 plot(samples_naive(:,1), samples_naive(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('Naive-ESS')
                 
-                subplot(1,5,4);
+                subplot(1,6,4);
                 plot(samples_exact(:,1), samples_exact(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('Exact-HMC')
                 
                 
-                subplot(1,5,5);
+                subplot(1,6,5);
                 plot(samples_eff_epess(:,1), samples_eff_epess(:,2), 'x')
                 axis([lB(1) , uB(1), lB(2), uB(2)])
                 title('Eff-EPESS')
+                
+                subplot(1,6,6);
+                plot(samples_emh(:,1), samples_emh(:,2), 'x')
+                axis([lB(1) , uB(1), lB(2), uB(2)])
+                title('EP-MH')
+                
                 
             end
             
@@ -361,6 +381,12 @@ for dimension_index = 1:length(dimensions)
                 
             end
             
+            
+            if emh_on_off == 1
+                neff_emh(dimension_index, example_index,boundary_index) = mpsrf(samples_emh)/number_fn_eval_emh;
+                display(mpsrf(samples_emh), 'n_eff: EP-MH')
+                
+            end
             
             %
             
@@ -414,6 +440,13 @@ for dimension_index = 1:length(dimensions)
         if eff_epess_on_off == 1
             mean_neff_eff_epess(dimension_index,boundary_index) = mean(neff_eff_epess(dimension_index,:,boundary_index));
             display(mean_neff_eff_epess, 'n_eff/function evaluation: Efficient EPESS')
+%             samples_eff_epess_KL = vertcat(samples_eff_epess(number_samples/2:number_samples,:,1),samples_eff_epess(number_samples/2:number_samples,:,2),samples_eff_epess(number_samples/2:number_samples,:,3),samples_eff_epess(number_samples/2:number_samples,:,4));
+%             display(empiricalKLDivergence(samples_true_KL, samples_eff_epess_KL(number_samples/2:number_samples,:)), 'Emperical KL: Efficient EPESS')
+        end
+        
+        if emh_on_off == 1
+            mean_neff_emh(dimension_index,boundary_index) = mean(neff_emh(dimension_index,:,boundary_index));
+            display(mean_neff_emh, 'n_eff/function evaluation: EP-MH')
 %             samples_eff_epess_KL = vertcat(samples_eff_epess(number_samples/2:number_samples,:,1),samples_eff_epess(number_samples/2:number_samples,:,2),samples_eff_epess(number_samples/2:number_samples,:,3),samples_eff_epess(number_samples/2:number_samples,:,4));
 %             display(empiricalKLDivergence(samples_true_KL, samples_eff_epess_KL(number_samples/2:number_samples,:)), 'Emperical KL: Efficient EPESS')
         end

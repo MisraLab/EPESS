@@ -11,9 +11,9 @@
 %
 % 3. Perform ESS given the EP approximation  ??  Not done yet
 %
-% 4. Comaprison with HMC using Stan, ESS and Recycled ESS
+% 4. Comaprison with HMC using Stan, ESS, Recycled ESS and EP-MH
 %
-% 5. Comparisons with other algorithms - GESS and E-MH ?? Not Done Yet
+% 5. Comparisons with other algorithms - GESS
 
 
 
@@ -31,10 +31,11 @@ true_on_off = false;     % Approximation to true density % for KL part
 
 epess_on_off = false;
 epess_recycle_on_off = false;
-N_recycle = 10;           % Number of samples per slice
-ess_on_off = false;
+N_recycle = 5;           % Number of samples per slice
+ess_on_off = true;
 ess_recycle_on_off = true;
-hmc_on_off = false;
+hmc_on_off = true;
+emh_on_off = true;
 
 
 
@@ -90,9 +91,6 @@ if hmc_on_off
     bcancer_data = struct('N', N, 'M', M, 'x', x, 'y', y, 'priorSigma', priorSigma, 'priorMean', priorMean );
     fit = stan('file', '/Users/Jalaj/EPESS/MATLAB_code/hmc_bc.stan', 'data', bcancer_data, 'iter',number_samples, 'chains', number_chains);
 
-    % eta = fit.extract('permuted',true).eta;
-    % mean(eta)
-    
     % Breaking down samples into 4 chains
     pause(50)
     sims = fit.extract.beta; % This gives us samples from 4 chains in order
@@ -102,9 +100,7 @@ if hmc_on_off
         samples_new(:,:,chain_index) = sims((number_samples/2)*(chain_index-1)+1 : (number_samples/2)*chain_index, :);
     end
     % Aki's code for effective sample size for 4 chains
-    neff_hmc = mpsrf(samples_new);
-    
-    
+    neff_hmc = mpsrf(samples_new);    
     display(neff_hmc, 'n_eff: HMC')
 end
 
@@ -117,8 +113,8 @@ end
         initial_point = zeros(dimension,1)';
         [ samples_ess, n_fn_eval_ess ] = ess_sampler( number_samples , dimension, number_chains, logLikelihood, priorSigma, N_recycle, initial_point);
 
-        neff_ess(dimension_index, 1) = mpsrf(samples_ess)/n_fn_eval_ess
-        display(mpsrf(samples_ess), 'n_eff: ESS')
+        neff_ess = mpsrf(samples_ess)/n_fn_eval_ess;
+        display(neff_ess, 'n_eff: ESS')
     end
 
     if ess_recycle_on_off
@@ -126,13 +122,23 @@ end
         initial_point = zeros(dimension,1)';
         [ samples_recycled, n_fn_eval_ess_recycled ] = ess_sampler( number_samples , dimension, number_chains, logLikelihood, priorSigma, N_recycle, initial_point);
 
-        neff_ess(dimension_index, 1) = mpsrf(samples_recycled)/n_fn_eval_ess_recycled
-        display(mpsrf(samples_recycled), 'n_eff: ESS with recycling ')
+        neff_ess_recycle = mpsrf(samples_recycled)/n_fn_eval_ess_recycled;
+        display(neff_ess_recycle, 'n_eff: ESS with recycling ')
     end
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3. EP-MH
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+if emh_on_off ==1
+    
+    [samples_emh, n_fn_eval_emh, avg_acc_ratio] = mh_gprop(EP_mean, EP_covariance, logLikelihood, number_samples, number_chains);
+    
+    neff_emh = mpsrf(samples_emh)/n_fn_eval_ess_recycled;
+    display(neff_emh, 'n_eff: EP-MH')
+    
+end
 
 
 

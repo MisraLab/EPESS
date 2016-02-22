@@ -2,10 +2,8 @@ function [samples, number_fn_evaluations_emh, avg_acc_ratio] = mh_gprop(mu, sigm
 
 % INPUTS:
 % mu: EP-proposed mean, a column vector of length D. We will use this as the initial point. 
-
 % sigma: EP-proposed covariance, a PSD and symmetric matrix, D-by-D
 % target: log-probability density at any given point - for the target
-% distribution we want to sample from
 % nsamples: number of samples demanded, also as termination condition
 
 % OUTPUTS:
@@ -17,7 +15,7 @@ samples = zeros(nsamples+1,D, number_chains);
 
 % This is to scale down the proposal distribution
 % As a tuning parameter, optimize to get acc_ratio ~ 23%
-scale = 0.5;
+scale = 0.6;
 sigma = scale*sigma;
 
 number_fn_evaluations_emh = 0;
