@@ -26,7 +26,7 @@ mu_dot_prev = zeros([P 1]);
 iteration_count = 1;
 n = 0;
 
-while 1
+while iteration_count<3
     n = n + 1; % Shift index
     if n > N
        n = 1; % reset index
@@ -59,29 +59,33 @@ while 1
     end
     
     % Parameter updates
-    tau_cav = (D(n,:) * F(n,:)')^(-1) - tau(n);
+    tau_cav = (D(n,:) * F(n,:)')^(-1) - tau(n)
     mu_cav = 0;
     for i = 1:N
         if i ~= n
             mu_cav = mu_cav + tau(i) * mu(i) * D(i,:) * F(n,:)' / (1 - tau(n) * D(n,:) * F(n,:)'); %
+            %mu_cav = mu_cav - tau(i) * mu(i) * D(i,:) * F(n,:)' / (1 - tau(n) * D(n,:) * F(n,:)'); %
         end
     end
+    mu_cav
 
 %     mu_cav = max(mu_cav, 0.00001);
-    z = (S(n) * mu_cav + c(n)) / (sqrt(1 + (tau_cav)^(-1) * S(n)^2 )); %
-    tau_n_hat = tau_cav * ( 1 - normpdf(z) / (( tau_cav * (S(n))^(-2) + 1 ) * normcdf(z)) * (z + normpdf(z)/normcdf(z)) )^(-1); %
-    mu_n_hat = mu_cav + tau_cav^(-1) * normpdf(z) / (normcdf(z) * sqrt(S(n)^(-2) + tau_cav^(-1)) );
+    z = (S(n) * mu_cav + c(n)) / (sqrt(1 + (tau_cav)^(-1) * S(n)^2 )) %
+    tau_n_hat = tau_cav * ( 1 - normpdf(z) / (( tau_cav * (S(n))^(-2) + 1 ) * normcdf(z)) * (z + normpdf(z)/normcdf(z)) )^(-1) %
+    mu_n_hat = mu_cav + tau_cav^(-1) * normpdf(z) / (normcdf(z) * sqrt(S(n)^(-2) + tau_cav^(-1)) )
     
-    tau(n) = tau_n_hat - tau_cav;
-    mu(n) = tau(n)^(-1) * (tau_n_hat * mu_n_hat - tau_cav * mu_cav);
-    lambda(n) = - (tau_n_hat - (D(n,:) * F(n,:)')^(-1) ) / (tau_n_hat * D(n,:) * F(n,:)');
+    tau(n) = tau_n_hat - tau_cav
+    mu(n) = tau(n)^(-1) * (tau_n_hat * mu_n_hat - tau_cav * mu_cav)
+    lambda(n) = - (tau_n_hat - (D(n,:) * F(n,:)')^(-1) ) / (tau_n_hat * D(n,:) * F(n,:)')
     mu_dot = zeros([P 1]);
     for i = 1:N
         mu_dot = mu_dot + F(i,:)' * tau(i) * mu(i) / (D(n,:) * F(n,:)' * tau_n_hat);
     end
 %     disp(['mu_dot at ENDING of iteration: ', iteration_count])
-    mu_dot;
-        
+    mu_dot
+    
+    tau
+
     iteration_count = iteration_count + 1
     
     % Termination
@@ -93,7 +97,7 @@ while 1
     end
 end
 
-EP_mean = mu_dot;
+EP_mean = mu_dot
 % EP_covariance = pinv(Sigma_dot_inv) + lambda(n) * F(n,:) * F(n,:)';
 Sigma_dot_inv = inv(K);
 for i = 1:N
