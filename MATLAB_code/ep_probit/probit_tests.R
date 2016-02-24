@@ -7,7 +7,11 @@ setwd("/Users/Leechy/Documents/Columbia_Docs/Project_Research/ep-ess/src/breast_
 # rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-dataset_choice = 3 # 1 for Breast Cancer, 2 for Skin Sample, 3 for Pima Indian Diabetes, 4 for Ionosphere Radar
+dataset_choice = 5
+# 1 for Breast Cancer, 2 for Skin Sample, 3 for Pima Indian Diabetes, 
+# 4 for Ionosphere Radar, 5 for Musk Molecule, 6 for Sonar
+
+strip_outliers = TRUE # Strip data outliers for options 5 and 6
 
 ########################################################################
 # Read and format data
@@ -62,6 +66,8 @@ if (dataset_choice == 1) {
   
 } else if (dataset_choice == 4) {
   
+  # 4. Ionosphere Radar Data 
+  
   iono_data = read.table("ionosphere.data", sep=",")
   
   N <- nrow(iono_data) # Number of data points
@@ -75,6 +81,84 @@ if (dataset_choice == 1) {
   y <- as.integer(y) - 1 # Map to integers 1 and 2, then subtract by 1
   M <- ncol(x)
   
+} else if (dataset_choice == 5) {
+  
+  # 5. Musk Molecule Prediction
+  
+  library("kernlab")
+  data(musk) # 166 covariates
+  musk <- data.matrix(musk)
+
+  N <- nrow(musk) # Number of data points
+  M <- ncol(musk) # Number of total columns of original data
+  x <- musk[,2:(M-1)] # Note: First column are moledule ID's
+  y <- musk[,M] # 0 is non-musk, 1 is musk
+  y <- as.numeric(y) - 1
+  
+  x <- scale(x) # Standardize the data (Z-score)
+  M <- ncol(x)
+  
+  # for (i in 1:N) {
+  #   for (j in 1:M) {
+  #     x[i,j] <- x[i,j] + rnorm(1, mean=0, sd=1) # Random jitter
+  #   }
+  # }
+
+  if (strip_outliers == TRUE) {
+    # Now we throw out outliers, as they tend to work poorly with Gaussian CDF
+    # colSDs <- apply(x, 2, sd) # We may also consider stripping by column SD
+    outlier_index = c()
+    for (i in 1:N) {
+      for (j in 1:M) {
+        if (x[i,j] <= -4 || x[i,j] >= 4) {
+          outlier_index <- c(outlier_index, i)
+        }
+      }
+    }
+    outlier_index <- unique(outlier_index)
+    x <- x[-outlier_index,] # Remove all rows detected containing outliers
+    y <- y[-outlier_index]
+    N <- nrow(x)    
+  }
+
+  # x <- cbind(rep(1,N), x) # Add intercepts
+  M <- ncol(x)
+  
+} else if (dataset_choice == 6) {
+  
+  # 6. Sonar Energy Frequency Bands
+  
+  library("dprep")
+  data(sonar) # 60 covariates
+
+  N <- nrow(sonar) # Number of data points
+  M <- ncol(sonar) # Number of total columns of original data
+  x <- sonar[,1:(M-1)] # Note: First column are molecule ID's
+  y <- sonar[,M] - 1 # Originally 1 and 2, lower to 0 and 1
+  
+  x <- scale(x) # Standardize the data (Z-score)
+  M <- ncol(x)
+
+  if (strip_outliers == TRUE) {
+    # Now we throw out outliers, as they tend to work poorly with Gaussian CDF
+    # colSDs <- apply(x, 2, sd) # We may also consider stripping by column SD
+    outlier_index = c()
+    for (i in 1:N) {
+      for (j in 1:M) {
+        if (x[i,j] <= -2 || x[i,j] >= 2) {
+          outlier_index <- c(outlier_index, i)
+        }
+      }
+    }
+    outlier_index <- unique(outlier_index)
+    x <- x[-outlier_index,] # Remove all rows detected containing outliers
+    y <- y[-outlier_index]
+    N <- nrow(x)    
+  }
+
+  x <- cbind(rep(0.1,N), x) # Add intercepts
+  M <- ncol(x)
+  
 }
 
 ########################################################################
@@ -83,8 +167,8 @@ if (dataset_choice == 1) {
 library("rstan")
 #library("mvtnorm")
 
-number_samples <- 100
-number_chains <- 4
+number_samples <- 1000
+number_chains <- 1
 
 input_data <- list(N=N, M=M, x=x, y=y)
 fit_stan <- stan("hmc_bc.stan", data=input_data, iter=number_samples, chains=number_chains)
