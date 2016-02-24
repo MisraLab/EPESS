@@ -7,11 +7,13 @@ setwd("/Users/Leechy/Documents/Columbia_Docs/Project_Research/ep-ess/src/breast_
 # rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-dataset_choice = 5
+dataset_choice = 2
 # 1 for Breast Cancer, 2 for Skin Sample, 3 for Pima Indian Diabetes, 
 # 4 for Ionosphere Radar, 5 for Musk Molecule, 6 for Sonar
 
 strip_outliers = TRUE # Strip data outliers for options 5 and 6
+
+library(R.matlab)
 
 ########################################################################
 # Read and format data
@@ -32,6 +34,8 @@ if (dataset_choice == 1) {
   y <- as.integer(y) - 1 # M=1 B=0
   M <- ncol(x) # Number of valid covariates
   
+  writeMat("data_bc.mat", data_bc = cbind(x,y)) 
+  
 } else if (dataset_choice == 2) {
   
   # 2. RGB Skin Sample Classification
@@ -48,10 +52,11 @@ if (dataset_choice == 1) {
   y <- y - 1 # Maps the original classes from 1 and 2 to 0 and 1
   M <- ncol(x) # Number of valid covariates
   
+  writeMat("data_skin.mat", data_skin = cbind(x,y)) 
+  
 } else if (dataset_choice == 3) {
   
   # 3. Pima Indians Diabetes Classification
-  
   pima_data = read.table("pima-indians-diabetes.data", sep=",")
   
   N <- nrow(pima_data) # Number of data points
@@ -64,10 +69,11 @@ if (dataset_choice == 1) {
   x <- cbind(rep(1,N), x) # Add intercepts
   M <- ncol(x) # Number of valid covariates
   
+  writeMat("data_pima.mat", data_pima = cbind(x,y)) 
+  
 } else if (dataset_choice == 4) {
   
   # 4. Ionosphere Radar Data 
-  
   iono_data = read.table("ionosphere.data", sep=",")
   
   N <- nrow(iono_data) # Number of data points
@@ -81,10 +87,11 @@ if (dataset_choice == 1) {
   y <- as.integer(y) - 1 # Map to integers 1 and 2, then subtract by 1
   M <- ncol(x)
   
+  writeMat("data_iono.mat", data_iono = cbind(x,y)) 
+  
 } else if (dataset_choice == 5) {
   
   # 5. Musk Molecule Prediction
-  
   library("kernlab")
   data(musk) # 166 covariates
   musk <- data.matrix(musk)
@@ -124,10 +131,11 @@ if (dataset_choice == 1) {
   # x <- cbind(rep(1,N), x) # Add intercepts
   M <- ncol(x)
   
+  writeMat("data_musk.mat", data_musk = cbind(x,y)) 
+  
 } else if (dataset_choice == 6) {
   
   # 6. Sonar Energy Frequency Bands
-  
   library("dprep")
   data(sonar) # 60 covariates
 
@@ -159,6 +167,8 @@ if (dataset_choice == 1) {
   x <- cbind(rep(0.1,N), x) # Add intercepts
   M <- ncol(x)
   
+  writeMat("data_sonar.mat", data_sonar = cbind(x,y)) 
+  
 }
 
 ########################################################################
@@ -185,6 +195,10 @@ library("EPGLM")
 EP_approx <- EPprobit(x,y,1) # 1 is the prior variance of each variable
 EP_means <- EP_approx$m
 EP_variance <- EP_approx$V
+
+# export EP mean and covariance
+writeMat("EP_mean.mat", EP_mean = EP_means) 
+writeMat("EP_covariance.mat", EP_covariance = EP_variance)
 
 ########################################################################
 # Difference between HMC approximation and EP approximation

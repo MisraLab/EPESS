@@ -9,9 +9,10 @@ parameters {
 }
 model {
   for (i in 1:M) {
-    beta[i] ~ normal(0,0.1);
+    beta[i] ~ normal(0,1);
   }
   for (n in 1:N) {
+    // y[n] ~ bernoulli(Phi(x[n]*beta));
     y[n] ~ bernoulli(Phi_approx(x[n]*beta));
     // y[n] ~ bernoulli_logit(x[n]*beta);
   }
