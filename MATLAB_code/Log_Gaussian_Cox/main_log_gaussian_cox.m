@@ -2,7 +2,7 @@
 
 %% Parameters
 
-number_samples = 1000;
+number_samples = 50000;
 number_chains = 1;
 number_recycles = 10;
 rng(1)
@@ -29,12 +29,9 @@ number_years = length(year_buckets);
 
 %% Find EP estimates
 
-%[ EP_mean, EP_site_variance, sigma_f2, length_scale] = EP_COAL(dates_of_disasters, yearly_buckets)
+[ EP_mean, EP_site_variance, sigma_f2, length_scale] = EP_COAL(dates_of_disasters, year_buckets);
 
 %% Sample uses (EP)ESS
-
-% Construct the log-likelihoods
-logLikelihood = @(x)(sum(year_number_disasters.*(x)-exp(x)));
 
 % Construct the covariance matrix from the lengthscale and sigma
 
@@ -62,10 +59,18 @@ lambda = lambda_vec(find(lambda_norms==min(lambda_norms)));
 prior_cov = prior_cov + eye(number_years)*lambda;
 prior_chol = chol(prior_cov);
 
+% Construct the log-likelihoods
+logLikelihood = @(x)(sum(year_number_disasters.*(x)-exp(x)) + logGaussPdfChol(x', zeros(number_years,1), prior_chol));
+
 % Construct the EP correlation matrix from the prior and the site variances
-EP_chol =  chol(inv(inv(prior_cov) + diag(EP_site_variance.^(-1))));
+%EP_chol =  chol(inv(inv(prior_cov) + diag(EP_site_variance.^(-1)))+eye(number_years));
+%EP_chol =  diag(EP_site_variance);
+EP_chol = chol(cov(naive_samples((number_samples/2+1):number_samples , :, :)));
+EP_mean = mean(naive_samples(ceil(number_samples/2):number_samples,:))';
 
 [ naive_samples, ~ ,naive_number_fn_evaluations ] = epessSampler( number_samples , number_years, number_chains, logLikelihood, zeros(1,number_years), prior_chol);
+[ naive_samples_chol, ~ ,naive_chol_number_fn_evaluations ] = epessSampler( number_samples , number_years, number_chains, logLikelihood, zeros(1,number_years), EP_chol);
+[ naive_samples_mean, ~ ,naive_mean_number_fn_evaluations ] = epessSampler( number_samples , number_years, number_chains, logLikelihood, EP_mean', prior_chol);
 [ EP_samples, ~ ,EP_number_fn_evaluations ] = epessSampler( number_samples , number_years, number_chains, logLikelihood, EP_mean', EP_chol );
 [ recycled_samples, recycled_number_fn_evaluations ] = epessRec_sampler( number_samples , number_years, number_chains, logLikelihood, EP_mean', EP_chol, number_recycles );
 
@@ -79,6 +84,12 @@ disp(['Recycled: ', num2str(mpsrf(recycled_samples((number_samples/2+1):number_s
 % Plot
 plot(1:number_years,EP_mean,'k',...
       1:number_years,mean(naive_samples(ceil(number_samples/2):number_samples,:)),'r',...
+     1:number_years,mean(EP_samples(ceil(number_samples/2):number_samples,:)),'b',...
+     1:number_years,mean(recycled_samples(ceil(number_samples/2):number_samples,:)),'c')
+plot(1:number_years,EP_mean,'k',...
+      1:number_years,mean(naive_samples(ceil(number_samples/2):number_samples,:)),'r',...
+      1:number_years,mean(naive_samples_chol(ceil(number_samples/2):number_samples,:)),'g',...
+      1:number_years,mean(naive_samples_mean(ceil(number_samples/2):number_samples,:)),'y',...
      1:number_years,mean(EP_samples(ceil(number_samples/2):number_samples,:)),'b',...
      1:number_years,mean(recycled_samples(ceil(number_samples/2):number_samples,:)),'c')
 
