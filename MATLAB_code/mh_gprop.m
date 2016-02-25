@@ -22,7 +22,7 @@ number_fn_evaluations_emh = 0;
 
 for  i=1:number_chains
     
-    % initial point
+    % Using EP mean for the initial point
     samples(1,:,i) = mu;
     valid_s_count = 1;
     iter_count = 0;
