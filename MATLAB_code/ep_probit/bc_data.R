@@ -19,6 +19,7 @@ y <- bc_data[,2] # Diagnosis (M = malignant, B = benign)
 
 # Standardize the data
 x <- scale(x)
+x <- x*0.1 # Make scale 0.1 so that prior variance of 1 is uninformative
 
 x <- cbind(rep(1,N), x) # Add intercepts
 y <- as.integer(y) - 1 # M=1 B=0
@@ -39,7 +40,7 @@ fit_stan <- stan("hmc_bc.stan", data=input_data, iter=number_samples, chains=num
 
 print(fit_stan)
 sim=extract(fit_stan)
-HMC_means <- colMeans(sim[1]$beta)
+HMC_mean <- colmean(sim[1]$beta)
 HMC_variance <- var(sim[1]$beta)
 
 ########################################################################
@@ -47,9 +48,13 @@ HMC_variance <- var(sim[1]$beta)
 
 library("EPGLM")
 EP_approx <- EPprobit(x,y,1) # 1 is the prior variance of each variable
-EP_means <- EP_approx$m
+EP_mean <- EP_approx$m
 EP_variance <- EP_approx$V
+
+# Write as csv
+write.table(EP_mean, "./bc_EP_mean", sep="\t",row.names=FALSE,col.names=FALSE) 
+write.table(EP_variance, "./bc_EP_variance", sep="\t",row.names=FALSE,col.names=FALSE) 
 
 ########################################################################
 # Difference between HMC approximation and EP approximation
-print(HMC_means - EP_means)
+print(HMC_mean - EP_mean)
