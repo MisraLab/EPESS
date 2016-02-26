@@ -15,6 +15,8 @@ strip_outliers = TRUE # Strip data outliers for options 5 and 6
 
 library(R.matlab)
 
+data_expt_names = c("bc","skin","pima","iono","musk","sonar")
+
 ########################################################################
 # Read and format data
 
@@ -188,6 +190,12 @@ sim=extract(fit_stan)
 HMC_means <- colMeans(sim[1]$beta)
 HMC_variance <- var(sim[1]$beta)
 
+# export HMC mean and covariance
+hmcmean_fname = paste(data_expt_names[dataset_choice], "_HMC_mean.mat", sep="")
+hmccov_fname = paste(data_expt_names[dataset_choice], "_HMC_covariance.mat", sep="")
+writeMat(hmcmean_fname, HMC_mean = HMC_means)
+writeMat(hmccov_fname, HMC_covariance = HMC_variance)
+
 ########################################################################
 # EP approximation
 
@@ -197,8 +205,10 @@ EP_means <- EP_approx$m
 EP_variance <- EP_approx$V
 
 # export EP mean and covariance
-writeMat("EP_mean.mat", EP_mean = EP_means) 
-writeMat("EP_covariance.mat", EP_covariance = EP_variance)
+epmean_fname = paste(data_expt_names[dataset_choice], "_EP_mean.mat", sep="")
+epcov_fname = paste(data_expt_names[dataset_choice], "_EP_covariance.mat", sep="")
+writeMat(epmean_fname, EP_mean = EP_means) 
+writeMat(epcov_fname, EP_covariance = EP_variance)
 
 ########################################################################
 # Difference between HMC approximation and EP approximation
