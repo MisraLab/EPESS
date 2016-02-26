@@ -14,9 +14,9 @@ dataset_choice = 1
 strip_outliers = TRUE # Strip data outliers for options 5 and 6
 
 num_examples = 1 # Number of iterations to loop over
-hmc_switch = TRUE # TRUE for ON, FALSE for OFF
+hmc_switch = FALSE # TRUE for ON, FALSE for OFF
 ep_switch = TRUE
-export_mean_cov = FALSE
+export_mean_cov = TRUE
 
 # HMC parameters
 number_samples <- 200
