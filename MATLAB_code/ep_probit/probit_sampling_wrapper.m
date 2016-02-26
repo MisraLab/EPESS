@@ -2,14 +2,14 @@
 
 %% Parameters
 
-number_samples = 400;
+number_samples = 4000;
 number_chains = 1;
 number_examples = 1;
 frac_burnin = 0.1;
 rng(1)
 tic
 %% Load data
-dataset = 'musk';% bc, iono , pima , sonar , musk
+dataset = 'bc';% bc, iono , pima , sonar , musk
 
 % Read data and EP values
 load(['data_',dataset,'.mat']);
@@ -35,7 +35,7 @@ EP_chol = chol(EP_covariance);
 
 logLikelihood = @(beta)(sum( log(normcdf(X'*beta'))) - 0.5*beta*beta'/100); % Probit likelihood with prior having variance 100 on each variable.
 
-for algorithm_index = 8:8
+for algorithm_index = 9:9
     eff_vec = zeros(1,number_examples);
     number_fn_evaluations_vec = zeros(1,number_examples);
     for example_index = 1:number_examples
@@ -72,6 +72,18 @@ for algorithm_index = 8:8
                 algorithm_name = 'EPSS J=10, N=10';
                 J=10;N=10;
                 [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
+            case 9
+                algorithm_name = 'EPESS J=1, N=2';
+                J=1;N=2;
+                [ samples ,number_fn_evaluations ] =  epessRec_sampler( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, N );
+            case 10
+                algorithm_name = 'EPESS J=1, N=5';
+                J=1;N=5;
+                [ samples ,number_fn_evaluations ] =  epessRec_sampler( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, N );
+            case 11
+                algorithm_name = 'EPESS J=1, N=10';
+                J=1;N=10;
+                [ samples ,number_fn_evaluations ] =  epessRec_sampler( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, N );
    
                 
         end
