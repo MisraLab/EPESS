@@ -9,7 +9,7 @@ parameters {
 }
 model {
   for (i in 1:M) {
-    beta[i] ~ normal(0,1);
+    beta[i] ~ normal(0,10);
   }
   for (n in 1:N) {
     // y[n] ~ bernoulli(Phi(x[n]*beta));

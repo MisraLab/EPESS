@@ -19,9 +19,8 @@ y <- bc_data[,2] # Diagnosis (M = malignant, B = benign)
 
 # Standardize the data
 x <- scale(x)
-x <- x*0.1 # Make scale 0.1 so that prior variance of 1 is uninformative
-
 x <- cbind(rep(1,N), x) # Add intercepts
+
 y <- as.integer(y) - 1 # M=1 B=0
 M <- ncol(x) # Number of valid covariates
 
@@ -40,14 +39,14 @@ fit_stan <- stan("hmc_bc.stan", data=input_data, iter=number_samples, chains=num
 
 print(fit_stan)
 sim=extract(fit_stan)
-HMC_mean <- colmean(sim[1]$beta)
+HMC_mean <- colMeans(sim[1]$beta)
 HMC_variance <- var(sim[1]$beta)
 
 ########################################################################
 # EP approximation
 
 library("EPGLM")
-EP_approx <- EPprobit(x,y,1) # 1 is the prior variance of each variable
+EP_approx <- EPprobit(x,y,100) # 100 is the prior variance of each variable
 EP_mean <- EP_approx$m
 EP_variance <- EP_approx$V
 

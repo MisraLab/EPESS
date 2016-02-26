@@ -1,4 +1,4 @@
-function [ mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_interval, distance_box_placement, inverse_wishart_df, x)
+function [ mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_interval, distance_box_placement, x)
 
 
        % Gte the mean and covariances for the truncated multi-variate
@@ -14,7 +14,8 @@ function [ mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_int
        else 
 %             Sigma = (1-lambda) *1 * eye(dimension) + lambda* iwishrnd(eye(dimension), inverse_wishart_df);
             Sigma = eye(dimension);
-            lB = (distance_box_placement).* ones(dimension,1);
+            lB = zeros(dimension,1);
+            lB(1) = distance_box_placement;
             uB = lB + axis_interval.*ones(dimension, 1);     
        end
        

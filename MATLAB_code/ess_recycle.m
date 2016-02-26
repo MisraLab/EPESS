@@ -100,7 +100,7 @@ output = zeros(N, dimension);
 % errors
 
 
-tol = (10^-2);
+tol = (10^-3);
 
 % Slice sampling loop
 

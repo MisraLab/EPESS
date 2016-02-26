@@ -30,15 +30,15 @@
 number_samples_exact = 10000;
 
 % MCMC parameters
-number_samples = 10000; % Eventually use 10000
-number_examples = 2; % Running the same example 30 times to get the avg. n_eff
-number_chains = 4; %4
+number_samples = 4000; % Eventually use 10000
+number_examples = 100; % Running the same example 30 times to get the avg. n_eff
+number_chains = 1; %4
 
 % Hyperparameters of the experiment
 % inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
-axis_interval = 2;  % length of the box interval along each dimension for axis-alligned method
+axis_interval = 1;  % length of the box interval along each dimension for axis-alligned method
 distance_box_placement = 10; % How far is the box placed form the origin along each dimension
-dimensions = [2] % [2,10,50,100]
+dimension = 2 % [2,10,50,100]
 
 
 % Hyperparameters for plotting
@@ -51,9 +51,9 @@ epess_on_off = false;
 epess_recycle_on_off = false;
 N_recycle = 10;
 naive_on_off = false;
-naive_recycle_on_off = true;
+naive_recycle_on_off = false;
 hmc_on_off = false;
-eff_epess_on_off = false;
+eff_epess_on_off = true;
 emh_on_off = false;
 
 
@@ -109,20 +109,19 @@ neff_emh = zeros(number_examples,1);
 % time_exact_hmc = zeros(length(dimensions), number_examples);
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 1. Simulate a gaussian and specify the trauncation box (randomly)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% See the simulateTmg code for specifying C, lB and uB
+% Cx >= lB and Cx <= uB
+[mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_interval, distance_box_placement, x);
+logLikelihood = @(x)( logPdfTmg( x, mu, chol_Sigma, C, lB, uB ));
+
 
 for example_index = 1:number_examples
     
-    
-    
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % 1. Simulate a gaussian and specify the trauncation box (randomly)
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    % See the simulateTmg code for specifying C, lB and uB
-    % Cx >= lB and Cx <= uB
-    [mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_interval, distance_box_placement, inverse_wishart_df, x);
-    logLikelihood = @(x)( logPdfTmg( x, mu, chol_Sigma, C, lB, uB ));
+ 
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % 2. Calculate the EP-approximation: John's Code
@@ -153,10 +152,11 @@ for example_index = 1:number_examples
         
         disp('EPESS')
         temp = tic;
+        % Not passing any initial point 
         [ samples, nu, number_fn_eval_epess ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol);
         time_epess = toc(temp);
         
-        eff_epess(example_index,1) = mpsrf(samples(1000:number_samples,:,:));
+        eff_epess(example_index,1) = mpsrf(samples);
         fn_eval_epess(example_index,1) = number_fn_eval_epess;
         neff_epess(example_index,1) = eff_epess(example_index,1)/fn_eval_epess(example_index,1);
     end
@@ -170,10 +170,11 @@ for example_index = 1:number_examples
         
         disp('EPESS with recycling')
         temp = tic;
-        [ samples_recycle, number_fn_eval_epess_recycle ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, N_recycle );
+        % Not passing any initial point 
+        [ samples_recycle, number_fn_eval_epess_recycle ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, N_recycle);
         time_epess = toc(temp);
         
-        eff_epess_recycle(example_index,1) = mpsrf(samples_recycle(1000:number_samples,:,:));
+        eff_epess_recycle(example_index,1) = mpsrf(samples_recycle);
         fn_eval_epess_recycle(example_index,1) = number_fn_eval_epess_recycle;
         neff_epess_recycle(example_index,1) = eff_epess_recycle(example_index,1)/fn_eval_epess_recycle(example_index,1);
         
@@ -212,7 +213,7 @@ for example_index = 1:number_examples
         number_fn_eval_exact_hmc = sum(number_fn_eval_hmc);
         time_exact_hmc = toc(temp);
         
-        eff_exact_hmc(example_index,1) = mpsrf(samples_exact(1000:number_samples,:,:));
+        eff_exact_hmc(example_index,1) = mpsrf(samples_exact);
         fn_eval_exact_hmc(example_index,1) = number_fn_eval_exact_hmc;
         neff_exact_hmc(example_index,1) = eff_exact_hmc(example_index,1)/fn_eval_exact_hmc(example_index,1);
         
@@ -239,14 +240,15 @@ for example_index = 1:number_examples
         naive_sigma = eye(dimension);
         naive_chol = chol(naive_sigma);
         
-        [ samples_naive, nu_naive, number_fn_eval_naive ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, naive_mean', naive_chol,((lB+uB)/2)');
+        % Not passing any initial point
+        [ samples_naive, nu_naive, number_fn_eval_naive ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, naive_mean', naive_chol);
         
         % The other method of just accepting the slices that lie
         % within that ellipse
         % [ samples_naive, nu_naive, number_fn_eval_naive ] = epessSampler_naive( number_samples , dimension, number_chains, naive_mean', naive_chol, F, g, ((lB+uB)/2)') ;
         time_ess = toc(temp);
         
-        eff_ess(example_index,1) = mpsrf(samples_naive(1000:number_samples,:,:));
+        eff_ess(example_index,1) = mpsrf(samples_naive);
         fn_eval_ess(example_index,1) = number_fn_eval_naive;
         neff_ess(example_index,1) = eff_ess(example_index,1)/fn_eval_ess(example_index,1);
     end
@@ -264,10 +266,11 @@ for example_index = 1:number_examples
         naive_sigma = eye(dimension);
         naive_chol = chol(naive_sigma);
         
-        [ samples_naive_recycle, number_fn_eval_naive_recycle ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, naive_mean', naive_chol, N_recycle,((lB+uB)/2)') ;
+        % Not passing any initial point 
+        [ samples_naive_recycle, number_fn_eval_naive_recycle ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, naive_mean', naive_chol, N_recycle) ;
         time_ess = toc(temp);
         
-        eff_ess_recycle(example_index,1) = mpsrf(samples_naive_recycle(1000:number_samples,:,:));
+        eff_ess_recycle(example_index,1) = mpsrf(samples_naive_recycle);
         fn_eval_ess_recycle(example_index,1) = number_fn_eval_naive_recycle;
         neff_ess_recycle(example_index,1) = eff_ess_recycle(example_index,1)/fn_eval_ess_recycle(example_index,1);
         
@@ -300,7 +303,7 @@ for example_index = 1:number_examples
         [ samples_eff_epess, fn, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g, EP_cov_inv, N, J);
         time_eff_epess = toc(temp);
         
-        eff_interval_epess(example_index,1) = mpsrf(samples_eff_epess(1000:number_samples,:,:));
+        eff_interval_epess(example_index,1) = mpsrf(samples_eff_epess);
         fn_eval_interval_epess(example_index,1) = number_fn_eval_eff_epess;
         neff_interval_epess(example_index,1) = eff_interval_epess(example_index,1)/fn_eval_interval_epess(example_index,1);
         
@@ -317,7 +320,7 @@ for example_index = 1:number_examples
         disp('EP-MH')
         [samples_emh, number_fn_eval_emh, avg_acc_ratio] = mh_gprop(EP_mean, EP_covariance, logLikelihood, number_samples, number_chains);
         
-        eff_emh(example_index,1) = mpsrf(samples_emh(1000:number_samples,:,:));
+        eff_emh(example_index,1) = mpsrf(samples_emh);
         fn_eval_emh(example_index,1) = number_fn_eval_emh;
         neff_emh(example_index,1) = eff_emh(example_index,1)/fn_eval_emh(example_index,1);
         
