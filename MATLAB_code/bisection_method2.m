@@ -70,8 +70,6 @@ function [ bound, number_fn_evals, probe_points, probe_log_thresholds, initial_b
         bound = probe_points(bound_index); 
     else % Bisection method
         
-        % Initialize the bound
-        
         % Loop until find a good bound
         while (outer_point - inner_point) > tol
 

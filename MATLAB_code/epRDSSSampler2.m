@@ -69,7 +69,8 @@ function [ samples ,number_fn_evaluations ] =  epRDSSSampler2( number_samples , 
                     end
                 end
             end
-            cur_sample = samples( sample_counter,:,chain_index);
+            
+            cur_sample = samples( sample_counter - floor(rand*N*J),:,chain_index);
             cur_log_like = logLikelihood(cur_sample);
         end
     end

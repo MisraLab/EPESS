@@ -2,14 +2,12 @@
 
 %% Parameters
 
-number_samples = 10000;
+number_samples = 4000;
 number_chains = 1;
-number_recycles = 5;
-N=5;
-J=1;
-tol=1e-3;
+number_examples = 400;
+frac_burnin = 0.1;
 rng(1)
-
+tic
 %% Load data
 
 % Breast cander data
@@ -39,31 +37,86 @@ EP_chol = chol(EP_cov);
 
 logLikelihood = @(beta)(sum( log(normcdf(X'*beta'))) - 0.5*beta*beta'/100); % Probit likelihood with prior having variance 100 on each variable.
 
-[ naive_samples, ~ ,naive_number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, zeros(1,dimension), eye(dimension));
-disp(['Naive: ', num2str(mpsrf(naive_samples((number_samples/2+1):number_samples , :, :)) / naive_number_fn_evaluations)])
-disp(['Naive: ', num2str(mpsrf(naive_samples((number_samples/2+1):number_samples , :, :))) ])
-disp(['Naive: ',  num2str(naive_number_fn_evaluations)])
-
-[ EP_samples, ~ ,EP_number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol );
-disp(['EP: ', num2str(mpsrf(EP_samples((number_samples/2+1):number_samples , :, :)) / EP_number_fn_evaluations)])
-disp(['EP: ', num2str(mpsrf(EP_samples((number_samples/2+1):number_samples , :, :)))])
-disp(['EP: ', num2str(EP_number_fn_evaluations)])
-
-[ MH_samples ,MH_number_fn_evaluations ] =  epmhSampler( number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean' );
-disp(['MH: ', num2str(mpsrf(MH_samples((number_samples/2+1):number_samples , :, :)) / MH_number_fn_evaluations)])
-disp(['MH: ', num2str(mpsrf(MH_samples((number_samples/2+1):number_samples , :, :)))])
-disp(['MH: ', num2str(MH_number_fn_evaluations)])
-
-[ EPSS_samples ,EPSS_number_fn_evaluations ] =  epRDSSSampler2( number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, tol );
-disp(['EPSS: ', num2str(mpsrf(EPSS_samples((number_samples/2+1):number_samples , :, :)) / EPSS_number_fn_evaluations)])
-disp(['EPSS: ', num2str(mpsrf(EPSS_samples((number_samples/2+1):number_samples , :, :)))])
-disp(['EPSS: ', num2str(EPSS_number_fn_evaluations)])
-
-for number_recycles = 1:1
-    [ recycled_samples, recycled_number_fn_evaluations ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, number_recycles );
-    disp(['Recycled with ',num2str(number_recycles),' recycles: ', num2str(mpsrf(recycled_samples((number_samples/2+1):number_samples , :, :)) / recycled_number_fn_evaluations)])
+for algorithm_index = 4:8
+    eff_vec = zeros(1,number_examples);
+    number_fn_evaluations_vec = zeros(1,number_examples);
+    for example_index = 1:number_examples
+        switch algorithm_index
+            case 1
+                algorithm_name = 'Naive ESS';
+                J=4;N=1;
+                [ samples, ~ , number_fn_evaluations ] = epessSampler( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, zeros(1,dimension), eye(dimension));
+            case 2
+                algorithm_name = 'EPESS';
+                J=1;N=1;
+                [ samples, ~ ,number_fn_evaluations ] = epessSampler( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol );
+            case 3
+                algorithm_name = 'EPMH';
+                J=1;N=1;
+                [ samples ,number_fn_evaluations ] =  epmhSampler( number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean' );
+            case 4
+                algorithm_name = 'EPSS J=1, N=1';
+                J=1;N=1;
+                [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
+            case 5
+                algorithm_name = 'EPSS J=5, N=5';
+                J=5;N=5;
+                [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
+            case 6
+                algorithm_name = 'EPSS J=10, N=5';
+                J=10;N=5;
+                [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
+            case 7
+                algorithm_name = 'EPSS J=5, N=10';
+                J=5;N=10;
+                [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
+            case 8
+                algorithm_name = 'EPSS J=10, N=10';
+                J=10;N=10;
+                [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
+   
+                
+        end
+        eff_vec(example_index) = mpsrf(samples(ceil(number_samples*frac_burnin):number_samples , :, :)) / ceil(sqrt(J*N));
+        number_fn_evaluations_vec(example_index) = number_fn_evaluations / ceil(sqrt(J*N));
+        disp([num2str(example_index)]);
+    end
+    disp(['Algorithm : ',algorithm_name])
+    disp(['Mean effective sample size : ',num2str(mean(eff_vec))])
+    disp(['Std effective sample size : ',num2str(std(eff_vec))])
+    disp(['Mean number fn evaluations : ',num2str(mean(number_fn_evaluations_vec))])
+    disp(['Std number fn evaluations : ',num2str(std(number_fn_evaluations_vec))])
+    disp(['Mean ratio eff/n_fn_eval : ',num2str(mean(eff_vec./number_fn_evaluations_vec))])
+    disp(['Std ratio eff/n_fn_eval : ',num2str(std(eff_vec./number_fn_evaluations_vec))])
+    disp([num2str(mean(eff_vec)),', ',num2str(std(eff_vec)),', ',num2str(mean(number_fn_evaluations_vec)),', ',num2str(std(number_fn_evaluations_vec)),', ', num2str(mean(eff_vec./number_fn_evaluations_vec)),', ' ,num2str(std(eff_vec./number_fn_evaluations_vec))])
+    fprintf( '\n')
 end
 
+toc
+
+% for J = 1:3:20
+%     [ samples, number_fn_evaluations ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, J );
+%     for N = 1:3:20
+%         disp(['N = ',num2str(N),', J = ',num2str(J)])
+%         [ samples ,number_fn_evaluations ] =  epRDSSSampler3( J*N*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N);
+%     end
+% end
+
+% for J = 1:3:20
+%     for N = 1:3:20
+%         disp(['N = ',num2str(N),', J = ',num2str(J)])
+%         [ EPSS_samples ,EPSS_number_fn_evaluations ] =  epRDSSSampler3( J*N*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N);
+%         disp(['EPSS eff sample size / no. fn evals: ', num2str(mpsrf(EPSS_samples((J*N*number_samples/2+1):J*N*number_samples , :, :)) / EPSS_number_fn_evaluations)])
+%         disp(['EPSS eff sample size: ', num2str(mpsrf(EPSS_samples((J*N*number_samples/2+1):J*N*number_samples , :, :)))])
+%         disp(['EPSS no. fn evals: ', num2str(EPSS_number_fn_evaluations)])
+%     end
+% end
+
+
+
+% disp(['EPSS eff sample size / no. fn evals: ', num2str(mpsrf(samples((number_samples/2+1):number_samples , :, :)) / number_fn_evaluations)])
+% disp(['EPSS eff sample size: ', num2str(mpsrf(samples((ceil(number_samples/2+1)):number_samples , :, :)))])
+% disp(['EPSS no. fn evals: ', num2str(number_fn_evaluations)])
 
 
 
@@ -75,6 +128,6 @@ end
 % disp(['Recycled: ', num2str(mpsrf(recycled_samples((number_samples/2+1):number_samples , :, :)) / recycled_number_fn_evaluations)])
 
 
-% empirical_mean = mean(naive_samples(ceil(number_samples/2):number_samples,:))';
-% empirical_mean_EP = mean(EP_samples(ceil(number_samples/2):number_samples,:))';
+% empirical_mean = mean(samples(ceil(number_samples*frac_burnin):number_samples , :, :))';
+% empirical_mean_EP = mean(samples(ceil(number_samples/2):number_samples,:))';
 
