@@ -7,7 +7,7 @@ setwd("/Users/Leechy/Documents/Columbia_Docs/Project_Research/ep-ess/src/breast_
 # rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-dataset_choice = 1
+dataset_choice = 4
 # 1 for Breast Cancer, 2 for Skin Sample, 3 for Pima Indian Diabetes, 
 # 4 for Ionosphere Radar, 5 for Musk Molecule, 6 for Sonar
 
@@ -48,7 +48,7 @@ if (dataset_choice == 1) {
   y <- as.integer(y) - 1 # M=1 B=0
   M <- ncol(x) # Number of valid covariates
   
-  writeMat("data_bc.mat", data_bc = cbind(x,y)) 
+  writeMat("data_bc.mat", data = cbind(x,y)) 
   
 } else if (dataset_choice == 2) {
   
@@ -66,7 +66,7 @@ if (dataset_choice == 1) {
   y <- y - 1 # Maps the original classes from 1 and 2 to 0 and 1
   M <- ncol(x) # Number of valid covariates
   
-  writeMat("data_skin.mat", data_skin = cbind(x,y)) 
+  writeMat("data_skin.mat", data = cbind(x,y)) 
   
 } else if (dataset_choice == 3) {
   
@@ -83,7 +83,7 @@ if (dataset_choice == 1) {
   x <- cbind(rep(1,N), x) # Add intercepts
   M <- ncol(x) # Number of valid covariates
   
-  writeMat("data_pima.mat", data_pima = cbind(x,y)) 
+  writeMat("data_pima.mat", data = cbind(x,y)) 
   
 } else if (dataset_choice == 4) {
   
@@ -101,7 +101,7 @@ if (dataset_choice == 1) {
   y <- as.integer(y) - 1 # Map to integers 1 and 2, then subtract by 1
   M <- ncol(x)
   
-  writeMat("data_iono.mat", data_iono = cbind(x,y)) 
+  writeMat("data_iono.mat", data = cbind(x,y)) 
   
 } else if (dataset_choice == 5) {
   
@@ -145,7 +145,7 @@ if (dataset_choice == 1) {
   # x <- cbind(rep(1,N), x) # Add intercepts
   M <- ncol(x)
   
-  writeMat("data_musk.mat", data_musk = cbind(x,y)) 
+  writeMat("data_musk.mat", data = cbind(x,y)) 
   
 } else if (dataset_choice == 6) {
   
@@ -181,7 +181,7 @@ if (dataset_choice == 1) {
   x <- cbind(rep(0.1,N), x) # Add intercepts
   M <- ncol(x)
   
-  writeMat("data_sonar.mat", data_sonar = cbind(x,y)) 
+  writeMat("data_sonar.mat", data = cbind(x,y)) 
   
 }
 
