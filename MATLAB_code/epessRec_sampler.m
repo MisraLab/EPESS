@@ -41,7 +41,7 @@ function [ samples,number_fn_evaluations ] = epessRec_sampler( number_samples , 
                next_point = previous_point;
                m=0;
             end
-            number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations;
+            number_fn_evaluations = number_fn_evaluations +  1 + (cur_number_fn_evaluations-1)/dimension;
             sample_index = sample_index + m;           
         end
         
