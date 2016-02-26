@@ -1,4 +1,5 @@
-function [xx, cur_log_like, number_fn_evaluations, nu] = elliptical_slice_probit(xx, prior, cur_log_like, X)
+function [xx, cur_log_like, number_fn_evaluations, nu, Xxx, xxxx, xxEPmean, EPcholxx] = elliptical_slice_probit(xx, prior, cur_log_like, X, EP_mean, EPmeanEPmean, XEPmean, Xxx, xxxx, xxEPmean, EPcholxx)
+
 
 %ELLIPTICAL_SLICE Markov chain update for a distribution with a Gaussian "prior" factored out
 %
@@ -49,9 +50,7 @@ D = numel(xx);
 if (nargin < 4) || isempty(cur_log_like)
     cur_log_like = log_like_fn(xx, varargin{:});
 end
-if (nargin < 5) || isempty(angle_range)
-    angle_range = 0;
-end
+angle_range = 0;
 
 
 
@@ -67,20 +66,30 @@ else
     nu = reshape(prior'*randn(D, 1), size(xx));
 end
 
+Xnu = X'*nu';
+xxnu = xx*nu';
+nunu = nu*nu';
+nuEPmean = nu*EP_mean';
+EPcholnu = prior'\nu';
 
+log_like_fn = @(phi)(sum( log(normcdf( Xxx*cos(phi) + Xnu*sin(phi) + XEPmean ))) ...
+    - 0.5*(xxxx*(cos(phi))^2 +2*xxnu*cos(phi)*sin(phi) + nunu*(sin(phi))^2 ...
+    + 2*(xxEPmean*cos(phi) + nuEPmean*sin(phi)) ...
+    + EPmeanEPmean )/100 ...
+    + 0.5 * (norm(EPcholxx*cos(phi) + EPcholnu*sin(phi)))^2);
+
+% logLikelihood = @(phi)(sum( log(normcdf( X'*xx'*cos(phi) + X'*nu'*sin(phi) + X'*EP_mean' ))) ...
+%     - 0.5*(xx*xx'*(cos(phi))^2 +2*xx*nu'*cos(phi)*sin(phi) + nu*nu'*(sin(phi))^2 ...
+%     + 2*(xx*EP_mean'*cos(phi) + nu*EP_mean'*sin(phi)) ...
+%     + EP_mean*EP_mean' )/100 ...
+%     + 0.5 * (norm(EP_chol'\xx*cos(phi) + EP_chol'\nu*sin(phi)))^2);
+
+    %- logGaussPdfChol((xx*cos(phi) + nu*sin(phi))', zeros(dimension,1), EP_chol));
 
 % logLikelihood = @(x)(sum( log(normcdf( X'*(xx*cos(phi) + nu*sin(phi))' + X'*EP_mean' ))) ...
 %     - 0.5*((xx*cos(phi) + nu*sin(phi))*(xx*cos(phi) + nu*sin(phi))' + 2*(xx*cos(phi) + nu*sin(phi))*EP_mean' + EP_mean*EP_mean' )/100 ...
 %     - logGaussPdfChol((xx*cos(phi) + nu*sin(phi))', zeros(dimension,1), EP_chol));
 
-logLikelihood = @(x)(sum( log(normcdf( X'*xx'*cos(phi) + X'*nu'*sin(phi) + X'*EP_mean' ))) ...
-    - 0.5*(xx*xx'*(cos(phi))^2 +2*xx*nu'*cos(phi)*sin(phi) + nu*nu'*(sin(phi))^2 ...
-    + 2*(xx*EP_mean'*cos(phi) + nu*EP_mean'*sin(phi)) ...
-    + EP_mean*EP_mean' )/100 ...
-    - logGaussPdfChol((xx*cos(phi) + nu*sin(phi))', zeros(dimension,1), EP_chol));
-
-
-x = (xx*cos(phi) + nu*sin(phi))
 
 hh = log(rand) + cur_log_like;
 
@@ -105,8 +114,7 @@ number_fn_evaluations = 0;
 % Slice sampling loop
 while true
     % Compute xx for proposed angle difference and check if it's on the slice
-    xx_prop = xx*cos(phi) + nu*sin(phi);
-    cur_log_like = log_like_fn(xx_prop, varargin{:});
+    cur_log_like = log_like_fn(phi);
     number_fn_evaluations = number_fn_evaluations + 1;
     if cur_log_like > hh
         % New point is on slice, ** EXIT LOOP **
@@ -123,4 +131,9 @@ while true
     % Propose new angle difference
     phi = rand*(phi_max - phi_min) + phi_min;
 end
-xx = xx_prop;
+
+xx = xx*cos(phi) + nu*sin(phi);
+Xxx = Xxx*cos(phi) + Xnu*sin(phi);%X'*xx';
+xxxx = xxxx*(cos(phi))^2 + 2*xxnu*sin(phi)*cos(phi) + nunu*(sin(phi))^2;%xx*xx';
+xxEPmean = xxEPmean*cos(phi) + nuEPmean*sin(phi);%xx*EP_mean';
+EPcholxx = EPcholxx*cos(phi) + EPcholnu*sin(phi);%prior'\xx';
