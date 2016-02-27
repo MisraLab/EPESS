@@ -1,4 +1,4 @@
-function [output, value, number_fn_evaluations, nu] = uniform_epess(xx, prior, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv, N, J)
+function [output, value, fn_eval, nu] = uniform_epess(xx, prior, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv, N, J)
 
 
 % This code computes the acceptable slices of the ellipse which lie within 
@@ -50,7 +50,6 @@ end
 % angle_slice_2 = [angle_slice_1, angle_slice];
 
 % Coming from the the wall hitting computations
-number_fn_evaluations = fn_eval;        
 output = zeros(N*J, dimension);
 evaluation = zeros(J, dimension);
 

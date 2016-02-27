@@ -49,7 +49,7 @@ function [ samples, fn, number_fn_evaluations ] = uniformEpess( number_samples ,
                     [output, value, cur_number_fn_evaluations, nu(sample_index,:,chain_index)] = uniform_epess( next_point, EP_chol, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv, N, J);
                     samples(sample_index:(sample_index + N*J - 1),:,chain_index) = output;
                     fn(sample_index - 1, :) = value;
-                    number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations;
+                    number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations + N*J / dimension;
 
          end
         

@@ -9,31 +9,36 @@ frac_burnin = 0.1;
 rng(1)
 tic
 %% Load data
+dataset = 'bc';% bc, iono , pima , sonar , musk
 
-% Breast cander data
-load('data_bc.mat');
+% Read data and EP values
+load(['data_',dataset,'.mat']);
+load([dataset,'_EP_mean.mat']); %load('bc_EP_mean.mat');    %csvread('bc_EP_mean');
+load([dataset,'_EP_covariance.mat']);%load('bc_EP_covariance.mat');%EP_cov = csvread('bc_EP_variance');
 
-data_file = data_bc;
-
-dimension = size(data_bc,2) - 1;
-number_outcomes = size(data_bc,1);
+dimension = size(data,2) - 1;
+number_outcomes = size(data,1);
 
 % Transform so the covariates are zero mean and standard deviation 0.1.
 % This will make the Identity prior covariance matrix uninformative.
 
-Y = data_bc(:,size(data_bc,2)); % Read in the Y data
+Y = data(:,size(data,2)); % Read in the Y data
 if ~isempty(find(Y==0))
     Y = 2*Y-1; % Make Y -1,+1 instead of 0,1 if not already -1,+1
 end
 
-X = data_bc(:,1:(size(data_bc,2)-1))'; % Read in the X data
+X = data(:,1:(size(data,2)-1))'; % Read in the X data
 X = X.*repmat(Y,1,dimension)'; % Make X take the sign of Y so that in future only need to consider X
 
+<<<<<<< HEAD
 % Read in EP mean and covariance
 EP_mean = csvread('bc_EP_mean');
 EP_cov = csvread('bc_EP_variance');
 EP_cov_inv = inv(EP_cov);
 EP_chol = chol(EP_cov);
+=======
+EP_chol = chol(EP_covariance);
+>>>>>>> 84f50d8f1771ef8753c196b2d9946f786523e417
 %% Sample
 
 logLikelihood = @(beta)(sum( log(normcdf(X'*beta'))) - 0.5*beta*beta'/100); % Probit likelihood with prior having variance 100 on each variable.
@@ -75,6 +80,7 @@ for algorithm_index = 9:9
                 algorithm_name = 'EPSS J=10, N=10';
                 J=10;N=10;
                 [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
+<<<<<<< HEAD
                 
             case 9
                 algorithm_name = 'PROBIT AS TMG';
@@ -84,6 +90,21 @@ for algorithm_index = 9:9
                 initial_point = EP_mean';
                 [ samples, ~ ,number_fn_evaluations ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, F, g, EP_cov_inv, N, J);
                 
+=======
+            case 9
+                algorithm_name = 'EPESS J=1, N=2';
+                J=1;N=2;
+                [ samples ,number_fn_evaluations ] =  epessRec_sampler( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, N );
+            case 10
+                algorithm_name = 'EPESS J=1, N=5';
+                J=1;N=5;
+                [ samples ,number_fn_evaluations ] =  epessRec_sampler( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, N );
+            case 11
+                algorithm_name = 'EPESS J=1, N=10';
+                J=1;N=10;
+                [ samples ,number_fn_evaluations ] =  epessRec_sampler( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, N );
+   
+>>>>>>> 84f50d8f1771ef8753c196b2d9946f786523e417
                 
         end
         eff_vec(example_index) = mpsrf(samples(ceil(number_samples*frac_burnin):number_samples , :, :)) / ceil(sqrt(J*N));

@@ -22,7 +22,7 @@ function [ samples, nu ,number_fn_evaluations ] = epessSampler( number_samples ,
         for sample_index = 2 : number_samples
                      
             [samples(sample_index,:,chain_index), cur_log_like , cur_number_fn_evaluations, nu(sample_index,:,chain_index)] = elliptical_slice( samples(sample_index-1,:,chain_index), EP_chol, pseudoLogLikelihoodShifted, cur_log_like);
-            number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations;
+            number_fn_evaluations = number_fn_evaluations + 1 + (cur_number_fn_evaluations-1) / dimension;
             
             
         end
