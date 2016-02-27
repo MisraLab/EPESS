@@ -17,7 +17,7 @@ function [ samples, fn, number_fn_evaluations ] = uniformEpess( number_samples ,
         if (nargin < 12) || isempty(initial_point)
             initial_point = 0;
         end
-        samples(1,:,chain_index) = initial_point; 
+        samples(1,:,chain_index) = initial_point;
         cur_log_like = pseudoLogLikelihoodShifted(initial_point);
 
 %         % Run MCMC

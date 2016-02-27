@@ -30,14 +30,14 @@
 number_samples_exact = 10000;
 
 % MCMC parameters
-number_samples = 10000; % Eventually use 10000
-number_examples = 20; % Running the same example 30 times to get the avg. n_eff
+number_samples = 4000; % Eventually use 10000
+number_examples = 10; % Running the same example 30 times to get the avg. n_eff
 number_chains = 1; %4
 
 % Hyperparameters of the experiment
 % inverse_wishart_weight = 0.5; % The covariance is a convex combination of a identity and a matrix sampled from an inverse wishart
 axis_interval = 1;  % length of the box interval along each dimension for axis-alligned method
-distance_box_placement = 10; % How far is the box placed form the origin along each dimension
+distance_box_placement = 0; % How far is the box placed form the origin along each dimension
 dimension = 2 % [2,10,50,100]
 
 
@@ -47,8 +47,9 @@ plotting_on_off = false;
 trace_plot_on_off = false;
 
 true_on_off = false;     % Approximation to true density
-epess_on_off = true;
-epess_recycle_on_off = true;
+epess_on_off = false;
+epess_recycle_on_off = false;
+epess_recycle_same_seed_on_off = true;
 N_recycle = 5;
 naive_on_off = false;
 naive_recycle_on_off = false;
@@ -63,7 +64,7 @@ grid_size = 200; % Number of points to plot along each axis
 
 % Gridding up placement of the left boundry (denoted by x)
 % x = linspace(0,10,10);
-x=10;
+x=0;
 
 
 % Effective Sample Size, We will average over the examples
@@ -121,7 +122,7 @@ logLikelihood = @(x)( logPdfTmg( x, mu, chol_Sigma, C, lB, uB ));
 
 for example_index = 1:number_examples
     
- 
+   example_index
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % 2. Calculate the EP-approximation: John's Code
@@ -171,7 +172,7 @@ for example_index = 1:number_examples
         disp('EPESS with recycling')
         temp = tic;
         % Not passing any initial point 
-        [ samples_recycle, number_fn_eval_epess_recycle ] = epessRec_sampler( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, N_recycle);
+        [ samples_, number_fn_eval_epess_recycle ] = epessRec_sampler(floor(sqrt(N_recycle)*number_samples), dimension, number_chains, logLikelihood, EP_mean, EP_chol, N_recycle);
         time_epess = toc(temp);
         
         eff_epess_recycle(example_index,1) = mpsrf(samples_recycle);
@@ -180,6 +181,27 @@ for example_index = 1:number_examples
         
     end
     
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % 4. EPESS, Recycled EPESS with the same seed
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    if epess_recycle_same_seed_on_off == 1
+        
+        disp('EPESS with and without recycling in the same seed')
+        temp = tic;
+        % Not passing any initial point 
+        [ samples_epess, samples_recycle, number_fn_eval_epess, number_fn_eval_epess_recycle ] = epessRec_same_seed_sampler(number_samples, dimension, number_chains, logLikelihood, EP_mean, EP_chol, N_recycle);
+        time_epess = toc(temp);
+        mpsrf(samples_epess)/number_fn_eval_epess
+        mpsrf(samples_recycle)/number_fn_eval_epess_recycle
+
+        
+%         eff_epess_recycle(example_index,1) = mpsrf(samples_recycle);
+%         fn_eval_epess_recycle(example_index,1) = number_fn_eval_epess_recycle;
+%         neff_epess_recycle(example_index,1) = eff_epess_recycle(example_index,1)/fn_eval_epess_recycle(example_index,1);
+%         
+    end
     
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -381,24 +403,31 @@ end
 if epess_on_off ==1
     
     display('Results for EPESS')
-    display(mean(eff_epess), 'mean(eff)')
-    display(std(eff_epess), 'std(eff)')
-    display(mean(fn_eval_epess), 'mean(fn_eval)')
-    display(std(fn_eval_epess), 'std(fn_eval)')
-    display(mean(neff_epess), 'mean(n_eff)')
-    display(std(neff_epess), 'std(n_eff)')
+    display(num2str(mean(eff_epess)), 'mean(eff)')
+    display(num2str(std(eff_epess)), 'std(eff)')
+    display(num2str(mean(fn_eval_epess)), 'mean(fn_eval)')
+    display(num2str(std(fn_eval_epess)), 'std(fn_eval)')
+    display(num2str(mean(neff_epess)), 'mean(n_eff)')
+    display(num2str(std(neff_epess)), 'std(n_eff)')
+    
+    disp([num2str(mean(eff_epess)),', ',num2str(std(eff_epess)),', ',num2str(mean(fn_eval_epess)),', ',num2str(std(fn_eval_epess)),', ',num2str(mean(neff_epess)),', ', num2str(std(neff_epess))])
+    fprintf( '\n')
     
 end
 
 if epess_recycle_on_off ==1
     
-    display('Results for Recycled EPESS')
-    display(mean(eff_epess_recycle), 'mean(eff)')
-    display(std(eff_epess_recycle), 'std(eff)')
-    display(mean(fn_eval_epess_recycle), 'mean(fn_eval)')
-    display(std(fn_eval_epess_recycle), 'std(fn_eval)')
-    display(mean(neff_epess_recycle), 'mean(n_eff)')
-    display(std(neff_epess_recycle), 'std(n_eff)')
+    display('Results for Recycled EPESS')  
+    display(num2str(mean(eff_epess_recycle)), 'mean(eff)')
+    display(num2str(std(eff_epess_recycle)), 'std(eff)')
+    display(num2str(mean(fn_eval_epess_recycle)), 'mean(fn_eval)')
+    display(num2str(std(fn_eval_epess_recycle)), 'std(fn_eval)')
+    display(num2str(mean(neff_epess_recycle)), 'mean(n_eff)')
+    display(num2str(std(neff_epess_recycle)), 'std(n_eff)')
+    
+    disp([num2str(mean(eff_epess_recycle)),', ',num2str(std(eff_epess_recycle)),', ',num2str(mean(fn_eval_epess_recycle)),', ',num2str(std(fn_eval_epess_recycle)),', ',num2str(mean(neff_epess_recycle)),', ', num2str(std(neff_epess_recycle))])
+    fprintf( '\n')
+    
     
 end
 
