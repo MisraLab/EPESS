@@ -28,8 +28,8 @@ function [ angle_slice, fn_eval] = Wall_Hitting( curr_point, nu, F, g, EP_mean, 
 % b = curr_point + EP_mean;
 
 
-a = nu; 
-b = curr_point;
+a = nu 
+b = curr_point
 
 
 
@@ -44,7 +44,7 @@ phi = atan2(-fa,fb);
 
 % Now has been modified for general constraints
 g = g + F*EP_mean';
-pn = abs(g./U)<1; % these are the walls that may be hit 
+pn = abs(g./U)<1 % these are the walls that may be hit 
         
 
 

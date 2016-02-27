@@ -30,8 +30,8 @@
 number_samples_exact = 10000;
 
 % MCMC parameters
-number_samples = 4000; % Eventually use 10000
-number_examples = 100; % Running the same example 30 times to get the avg. n_eff
+number_samples = 10000; % Eventually use 10000
+number_examples = 20; % Running the same example 30 times to get the avg. n_eff
 number_chains = 1; %4
 
 % Hyperparameters of the experiment
@@ -47,13 +47,13 @@ plotting_on_off = false;
 trace_plot_on_off = false;
 
 true_on_off = false;     % Approximation to true density
-epess_on_off = false;
-epess_recycle_on_off = false;
-N_recycle = 10;
+epess_on_off = true;
+epess_recycle_on_off = true;
+N_recycle = 5;
 naive_on_off = false;
 naive_recycle_on_off = false;
 hmc_on_off = false;
-eff_epess_on_off = true;
+eff_epess_on_off = false;
 emh_on_off = false;
 
 
@@ -63,7 +63,7 @@ grid_size = 200; % Number of points to plot along each axis
 
 % Gridding up placement of the left boundry (denoted by x)
 % x = linspace(0,10,10);
-x=0;
+x=10;
 
 
 % Effective Sample Size, We will average over the examples

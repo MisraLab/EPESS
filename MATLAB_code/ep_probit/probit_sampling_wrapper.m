@@ -4,7 +4,7 @@
 
 number_samples = 4000;
 number_chains = 1;
-number_examples = 400;
+number_examples = 1;
 frac_burnin = 0.1;
 rng(1)
 tic
@@ -32,12 +32,13 @@ X = X.*repmat(Y,1,dimension)'; % Make X take the sign of Y so that in future onl
 % Read in EP mean and covariance
 EP_mean = csvread('bc_EP_mean');
 EP_cov = csvread('bc_EP_variance');
+EP_cov_inv = inv(EP_cov);
 EP_chol = chol(EP_cov);
 %% Sample
 
 logLikelihood = @(beta)(sum( log(normcdf(X'*beta'))) - 0.5*beta*beta'/100); % Probit likelihood with prior having variance 100 on each variable.
 
-for algorithm_index = 4:8
+for algorithm_index = 9:9
     eff_vec = zeros(1,number_examples);
     number_fn_evaluations_vec = zeros(1,number_examples);
     for example_index = 1:number_examples
@@ -74,7 +75,15 @@ for algorithm_index = 4:8
                 algorithm_name = 'EPSS J=10, N=10';
                 J=10;N=10;
                 [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
-   
+                
+            case 9
+                algorithm_name = 'PROBIT AS TMG';
+                J=5;N=1;
+                g = zeros(size(data_bc,1), 1);
+                F = X';
+                initial_point = EP_mean';
+                [ samples, ~ ,number_fn_evaluations ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, F, g, EP_cov_inv, N, J);
+                
                 
         end
         eff_vec(example_index) = mpsrf(samples(ceil(number_samples*frac_burnin):number_samples , :, :)) / ceil(sqrt(J*N));

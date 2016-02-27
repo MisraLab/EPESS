@@ -2,12 +2,13 @@
 
 rm(list = ls())
 
-setwd("/Users/Leechy/Documents/Columbia_Docs/Project_Research/ep-ess/src/breast_cancer")
+# setwd("/Users/Leechy/Documents/Columbia_Docs/Project_Research/ep-ess/src/breast_cancer")
 # setwd("/Users/francoisfagan/EPESS/EPESS/MATLAB_code/ep_probit")
+setwd("/Users/Jalaj/EPESS/MATLAB_code/ep_probit")
 # rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-dataset_choice = 2
+dataset_choice = 1
 # 1 for Breast Cancer, 2 for Skin Sample, 3 for Pima Indian Diabetes, 
 # 4 for Ionosphere Radar, 5 for Musk Molecule, 6 for Sonar
 
@@ -192,14 +193,14 @@ HMC_variance <- var(sim[1]$beta)
 # EP approximation
 
 library("EPGLM")
-EP_approx <- EPprobit(x,y,1) # 1 is the prior variance of each variable
-EP_means <- EP_approx$m
+EP_approx <- EPprobit(x,y,100) # 100 is the prior variance of each variable
+EP_mean <- EP_approx$m
 EP_variance <- EP_approx$V
 
-# export EP mean and covariance
-writeMat("EP_mean.mat", EP_mean = EP_means) 
-writeMat("EP_covariance.mat", EP_covariance = EP_variance)
+# Write as csv
+write.table(EP_mean, "./bc_EP_mean", sep="\t",row.names=FALSE,col.names=FALSE) 
+write.table(EP_variance, "./bc_EP_variance", sep="\t",row.names=FALSE,col.names=FALSE) 
 
 ########################################################################
 # Difference between HMC approximation and EP approximation
-print(HMC_means - EP_means)
+print(HMC_means - EP_mean)

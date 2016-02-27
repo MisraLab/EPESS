@@ -35,7 +35,7 @@ end
 % Angle range \belongs to [0, 2*pi] gives us the ellipticalregion
 % inside the box
 
-[angle_slice, fn_eval] = Wall_Hitting(xx, nu, F, g, EP_mean, dimension);
+[angle_slice, fn_eval] = Wall_Hitting(xx, nu, F, g, EP_mean, dimension)
 
 % These give us the angle ranges for which the ellipse lies within the box
 % if numel(angle_slice) == 0
@@ -160,6 +160,7 @@ for j=1:J                             % J threshold levels
        
     end   
     
+    exact_range
     
 %         % Region where the function is positive
 %         point = roots(1) - 1;
@@ -208,7 +209,7 @@ evaluation(j, :) = first_moment(xx, nu, exact_range);
         xx_prop = xx*cos(phi) + nu*sin(phi); 
         point = xx_prop + EP_mean;     
         
-        if ( (F*point' + g) < 0)
+        if ( (F*point' + g) < 0)  % this is just a check
            error('Bug detected')
            
         end
