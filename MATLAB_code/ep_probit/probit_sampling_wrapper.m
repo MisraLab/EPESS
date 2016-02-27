@@ -2,14 +2,14 @@
 
 %% Parameters
 
-number_samples = 4000;
+number_samples = 1000;
 number_chains = 1;
 number_examples = 1;
 frac_burnin = 0.1;
 rng(1)
 tic
 %% Load data
-dataset = 'bc';% bc, iono , pima , sonar , musk
+dataset = 'musk';% bc, iono , pima , sonar , musk
 
 % Read data and EP values
 load(['data_',dataset,'.mat']);
@@ -30,15 +30,7 @@ end
 X = data(:,1:(size(data,2)-1))'; % Read in the X data
 X = X.*repmat(Y,1,dimension)'; % Make X take the sign of Y so that in future only need to consider X
 
-<<<<<<< HEAD
-% Read in EP mean and covariance
-EP_mean = csvread('bc_EP_mean');
-EP_cov = csvread('bc_EP_variance');
-EP_cov_inv = inv(EP_cov);
-EP_chol = chol(EP_cov);
-=======
 EP_chol = chol(EP_covariance);
->>>>>>> 84f50d8f1771ef8753c196b2d9946f786523e417
 %% Sample
 
 logLikelihood = @(beta)(sum( log(normcdf(X'*beta'))) - 0.5*beta*beta'/100); % Probit likelihood with prior having variance 100 on each variable.
@@ -80,17 +72,6 @@ for algorithm_index = 9:9
                 algorithm_name = 'EPSS J=10, N=10';
                 J=10;N=10;
                 [ samples ,number_fn_evaluations ] =  epRDSSSampler3( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_chol, EP_mean', J, N, X);
-<<<<<<< HEAD
-                
-            case 9
-                algorithm_name = 'PROBIT AS TMG';
-                J=5;N=1;
-                g = zeros(size(data_bc,1), 1);
-                F = X';
-                initial_point = EP_mean';
-                [ samples, ~ ,number_fn_evaluations ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, F, g, EP_cov_inv, N, J);
-                
-=======
             case 9
                 algorithm_name = 'EPESS J=1, N=2';
                 J=1;N=2;
@@ -103,8 +84,6 @@ for algorithm_index = 9:9
                 algorithm_name = 'EPESS J=1, N=10';
                 J=1;N=10;
                 [ samples ,number_fn_evaluations ] =  epessRec_sampler( ceil(sqrt(J*N))*number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, N );
-   
->>>>>>> 84f50d8f1771ef8753c196b2d9946f786523e417
                 
         end
         eff_vec(example_index) = mpsrf(samples(ceil(number_samples*frac_burnin):number_samples , :, :)) / ceil(sqrt(J*N));
