@@ -3,14 +3,14 @@
 
 % Parameters of the model
 
-T=10;
+T=100;
 dimension = T-1;
 sigma2=1;   %noise level
-V0 = -40;
-VT=-20;
+V0 = -20;
+VT=-40;
 
 % Hyper parameters
-number_samples = 1000;
+number_samples = 5000;
 number_examples = 1; % Running the same example 30 times to get the avg. n_eff
 number_chains = 1; %4
 interval_ess_on_off = true;
@@ -48,9 +48,10 @@ mu = M\r;       % Faster and accurate way to compute mu
 % John's code for computing the EP approimation
 lB = -Inf(dimension,1);
 uB = VT*ones(dimension,1);
-[logZ, EP_mean , EP_covariance] = axisepmgp(mu,Sigma,lB,uB);
-EP_chol = chol(EP_covariance);
 C = eye(dimension);
+[logZ, EP_mean , EP_covariance] = epmgp(mu,Sigma,C',lB,uB)
+% [logZ, EP_mean , EP_covariance] = axisepmgp(mu,Sigma,lB,uB)
+EP_chol = chol(EP_covariance);
 logLikelihood = @(x)( logPdfTmg( x, mu, chol_Sigma, C, lB, uB ));
 
 
@@ -63,11 +64,12 @@ for example_index = 1:number_examples
         % N is the number of points per slice
         % J is the number of slices per ellipse
         
+        
+        display('Interval EPESS')
         N = 1;
-        J = 5;
+        J = 1;
         EP_cov_inv = inv(EP_covariance);
-        initial_point = (VT-2)*ones(dimension,1); 
-        [ samples_int_epess, fn, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, F, g, EP_cov_inv, N, J, initial_point');
+        [ samples_int_epess, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean', EP_chol, F, g, EP_cov_inv, N, J);
         
         eff_interval_epess(example_index,1) = mpsrf(samples_int_epess);
         fn_eval_interval_epess(example_index,1) = number_fn_eval_eff_epess;
@@ -78,6 +80,7 @@ for example_index = 1:number_examples
     
     if hmc_on_off == 1
         
+        display('Exact-HMC')
         cov=true;  % we are specifying the covariance matrix
         % Passing mu and Sigma -- the mean and covariance for tmg
         % F and g denote the constraint matrix: Expressing all the

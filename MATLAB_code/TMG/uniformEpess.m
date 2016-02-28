@@ -28,15 +28,12 @@ function [ samples, number_fn_evaluations ] = uniformEpess( number_samples , dim
 
                        % Unformly choosing the next point 
                        % to continue the Markov Chain
-                       % k = unidrnd(N*J); 
-                       k=1;
-                       next_point = output(k, :);
+                       next_point = output(N*J, :);
                     end
 
                     [output, cur_log_like, cur_number_fn_evaluations] = uniform_epess( next_point, EP_chol, pseudoLogLikelihoodShifted, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv, N, J);
                     samples(sample_index:(sample_index + N*J - 1),:,chain_index) = output;
-                    number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations + N*J / dimension;
-
+                    number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations;
          end
         
     end

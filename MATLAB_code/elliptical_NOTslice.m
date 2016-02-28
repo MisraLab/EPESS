@@ -86,11 +86,11 @@ end
 
 number_fn_evaluations = 0;
 % Slice sampling loop
+number_fn_evaluations = number_fn_evaluations + 1;
 while true
     % Compute xx for proposed angle difference and check if it's on the slice
     xx_prop = xx*cos(phi) + nu*sin(phi);
     cur_log_like = log_like_fn(xx_prop, varargin{:});
-    number_fn_evaluations = number_fn_evaluations + 1;
     if cur_log_like > hh
         % New point is on slice, ** EXIT LOOP **
         break;

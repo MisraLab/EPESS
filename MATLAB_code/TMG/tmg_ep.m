@@ -30,7 +30,7 @@ tic
 number_samples_exact = 10000;
 
 % MCMC parameters
-number_samples = 4000; % Eventually use 10000
+number_samples = 1000; % Eventually use 10000
 number_examples = 1; % Running the same example 30 times to get the avg. n_eff
 number_chains = 1; %4
 
@@ -39,7 +39,7 @@ number_chains = 1; %4
 axis_interval = 1;  % length of the box interval along each dimension for axis-alligned method
 distance_box_placement = 0; % How far is the box placed form the origin along each dimension
 dimension = 2 % [2,10,50,100]
-J=5;
+J=1;
 
 
 % Hyperparameters for plotting
@@ -48,14 +48,14 @@ plotting_on_off = false;
 trace_plot_on_off = false;
 
 true_on_off = false;     % Approximation to true density
-epess_on_off = true;
+epess_on_off = false;
 epess_recycle_on_off = false;
 epess_recycle_same_seed_on_off = false;
 N_recycle = 5;
 naive_on_off = false;
 naive_recycle_on_off = false;
 hmc_on_off = false;
-eff_epess_on_off = false;
+eff_epess_on_off = true;
 emh_on_off = false;
 
 
@@ -323,7 +323,7 @@ for example_index = 1:number_examples
         %% This implements the idea of uniform sampling along the
         % "acceptable" angle slices
         
-        [ samples_eff_epess, fn, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g, EP_cov_inv, N, J);
+        [ samples_eff_epess, number_fn_eval_eff_epess ] = uniformEpess( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol, F, g, EP_cov_inv, N, J);
         time_eff_epess = toc(temp);
         
         eff_interval_epess(example_index,1) = mpsrf(samples_eff_epess);
