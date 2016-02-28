@@ -21,7 +21,7 @@ function [ samples, nu ,number_fn_evaluations ] = epessSamplerNOTslice( number_s
         % Run MCMC
         for sample_index = 2 : number_samples
                      
-            [samples(sample_index,:,chain_index), cur_log_like , cur_number_fn_evaluations, nu(sample_index,:,chain_index)] = elliptical_Notslice( samples(sample_index-1,:,chain_index), EP_chol, pseudoLogLikelihoodShifted, cur_log_like);
+            [samples(sample_index,:,chain_index), cur_log_like , cur_number_fn_evaluations, nu(sample_index,:,chain_index)] = elliptical_NOTslice( samples(sample_index-1,:,chain_index), EP_chol, pseudoLogLikelihoodShifted, cur_log_like);
             number_fn_evaluations = number_fn_evaluations + 1 + (cur_number_fn_evaluations-1) / dimension;
             
             
