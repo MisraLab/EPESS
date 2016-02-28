@@ -31,7 +31,7 @@ number_samples_exact = 10000;
 
 % MCMC parameters
 number_samples = 4000; % Eventually use 10000
-number_examples = 1; % Running the same example 30 times to get the avg. n_eff
+number_examples = 10; % Running the same example 30 times to get the avg. n_eff
 number_chains = 1; %4
 
 % Hyperparameters of the experiment
@@ -39,7 +39,7 @@ number_chains = 1; %4
 axis_interval = 1;  % length of the box interval along each dimension for axis-alligned method
 distance_box_placement = 0; % How far is the box placed form the origin along each dimension
 dimension = 2 % [2,10,50,100]
-J=5;
+J=1;
 
 
 % Hyperparameters for plotting
@@ -123,7 +123,9 @@ logLikelihood = @(x)( logPdfTmg( x, mu, chol_Sigma, C, lB, uB ));
 
 for example_index = 1:number_examples
     
-   example_index
+   if mod(example_index,10)==0
+       disp(example_index)
+   end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % 2. Calculate the EP-approximation: John's Code
@@ -152,7 +154,7 @@ for example_index = 1:number_examples
     
     if epess_on_off == 1
         
-        disp('EPESS')
+        %disp('EPESS')
         temp = tic;
         % Not passing any initial point 
         [ samples, nu, number_fn_eval_epess ] = epessSamplerNOTslice( number_samples , dimension, number_chains, logLikelihood, EP_mean, EP_chol,J);

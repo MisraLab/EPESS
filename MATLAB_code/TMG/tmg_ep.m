@@ -30,8 +30,8 @@ tic
 number_samples_exact = 10000;
 
 % MCMC parameters
-number_samples = 1000; % Eventually use 10000
-number_examples = 1; % Running the same example 30 times to get the avg. n_eff
+number_samples = 4000; % Eventually use 10000
+number_examples = 10; % Running the same example 30 times to get the avg. n_eff
 number_chains = 1; %4
 
 % Hyperparameters of the experiment
@@ -309,7 +309,7 @@ for example_index = 1:number_examples
         % J is the number of slices per ellipse
         
         N = 1;
-        J = 5;
+        J = 1;
         EP_cov_inv = inv(EP_covariance);
         disp('Efficient EPESS')
         temp = tic;

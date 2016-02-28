@@ -24,10 +24,11 @@ function [ samples, nu ,number_fn_evaluations ] = epessSamplerNOTslice( number_s
             for j = 1:J
                 if sample_counter <= number_samples
                     [samples(sample_counter,:,chain_index), cur_log_like , cur_number_fn_evaluations, ~] = elliptical_NOTslice( samples(sample_counter-1,:,chain_index), EP_chol, pseudoLogLikelihoodShifted, cur_log_like);
-                    number_fn_evaluations = number_fn_evaluations + 1 + (cur_number_fn_evaluations-1) / dimension;
+                    number_fn_evaluations = number_fn_evaluations + cur_number_fn_evaluations / dimension;
                     sample_counter = sample_counter +1;
                 end
             end
+            number_fn_evaluations = number_fn_evaluations + 1;
         end
     end
     samples = samples + repmat(EP_mean , number_samples, 1 , number_chains);
