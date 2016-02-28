@@ -40,7 +40,7 @@ U = sqrt(fa.^2 + fb.^2);
 phi = atan2(-fa,fb); 
 
 
-% g = g + [EP_mean';-EP_mean']; this was the hack for box constraints 
+% g = g + [EP_mean';-EP_mean']; %this was the hack for box constraints 
 
 % Now has been modified for general constraints
 g = g + F*EP_mean';
@@ -51,7 +51,7 @@ pn = abs(g./U)<1; % these are the walls that may be hit
 
 if any(pn) 
         
-    phn= phi(pn);
+    phn=phi(pn);
     t1=-phn + acos(-g(pn)./U(pn));  % time at which coordinates hit the walls 
                                     % this expression always gives the correct result because U*cos(phi + t) + g >= 0.
 

@@ -1,4 +1,4 @@
-function [output, value, fn_eval, nu] = uniform_epess(xx, prior, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv, N, J)
+function [output, cur_log_like, fn_eval] = uniform_epess(xx, prior, log_like_fn, cur_log_like, F, g, EP_mean, dimension, EP_cov_inv, N, J)
 
 
 % This code computes the acceptable slices of the ellipse which lie within 
@@ -7,10 +7,7 @@ function [output, value, fn_eval, nu] = uniform_epess(xx, prior, cur_log_like, F
 % J be the number of different thresholds per ellipse -- for each
 % threshhold level we will get a different interval
 
-
 D = numel(xx);
-
-
 
 % Get the momentum variable from the prior
 
@@ -28,36 +25,29 @@ end
 
 
 
-
-
-
 % Input nu to Wall_hitting to compute the hitting times for all walls
 % Angle range \belongs to [0, 2*pi] gives us the ellipticalregion
 % inside the box
 
 [angle_slice, fn_eval] = Wall_Hitting(xx, nu, F, g, EP_mean, dimension);
 
-% These give us the angle ranges for which the ellipse lies within the box
-% if numel(angle_slice) == 0
-%    angle_slice = [0, 2*pi];
-% %    display('Entire ellipse');
-%    
-% end
-
-
-
-% angle_slice_1 = angle_slice - 2*pi;
-% angle_slice_2 = [angle_slice_1, angle_slice];
-
-% Coming from the the wall hitting computations
-output = zeros(N*J, dimension);
-evaluation = zeros(J, dimension);
-
-
+% % These give us the angle ranges for which the ellipse lies within the box
+% % if numel(angle_slice) == 0
+% %    angle_slice = [0, 2*pi];
+% % %    display('Entire ellipse');
+% %    
+% % end
+% 
+% 
+% % Coming from the the wall hitting computations
+% output = zeros(N*J, dimension);
+% evaluation = zeros(J, dimension);
+% 
+% 
 for j=1:J                             % J threshold levels
-
+% 
     hh = log(rand) + cur_log_like;    % Random thresholds
-    % hh = log(j/J) + cur_log_like;   % Griding thresholds
+%     % hh = log(j/J) + cur_log_like;   % Griding thresholds
 
     % Solve for interval where the likelihood is > a chosen threshold
     % Given by the roots of a Quartic equation
@@ -71,11 +61,11 @@ for j=1:J                             % J threshold levels
     a1 = -2*xx*EP_mean';
     a2 = -2*nu*EP_mean';
     a3 = 2*xx*mat*nu';
-    a4 = xx*mat*xx' - (a0+hh);
+    a4 = xx*mat*xx' - (a0+2*hh);
 
     a = (a4^2) + (a3^2);
     b = (2*a1*a4) + (2*a2*a3);
-    c = a1^2 + 2*a0*a4;
+    c = a1^2 + 2*a0*a4 - a3^2 +a2^2;
     d = (2*a0*a1) - (2*a2*a3);
     e = (a0^2) - (a2^2);
 
@@ -109,7 +99,7 @@ for j=1:J                             % J threshold levels
     TOL=1e-10;
     np=abs(imag(roots))<TOL;
     roots = sort(real(roots(np)));
-    thresh_region = @(x)( a*(cos(x)^2) + b*cos(x)*sin(x) + c*sin(x) + d*cos(x) + e);
+    thresh_region = @(x)( a4*(cos(x)^2) + a3*cos(x)*sin(x) + a2*sin(x) + a1*cos(x) + a0);
     
     
     % Finding the right angle ranges
@@ -130,8 +120,8 @@ for j=1:J                             % J threshold levels
            
            theta = [];
            for k=1:length(real_roots)
-               values = [ acos(real_roots(k)), 2*pi - acos(real_roots(k)) ];              
-               [c, p] = min([ abs(thresh_region(values(1))), abs(thresh_region(values(2)))] );              
+               values = [ acos(real_roots(k)), 2*pi - acos(real_roots(k)) ];        
+               [~, p] = min([ abs(thresh_region(values(1))), abs(thresh_region(values(2)))] );           
                theta = [theta, values(p)];
            end
            
@@ -144,6 +134,7 @@ for j=1:J                             % J threshold levels
                range_1 = []; 
                for i=1:(length(theta)-1)
                    point = (theta(i) + theta(i+1))/2;
+%                    display(thresh_region(theta(i)), 'thershold at these')
                    
                    if thresh_region(point) > 0
                        range_1 = [range_1, theta(i), theta(i+1)];
@@ -152,7 +143,6 @@ for j=1:J                             % J threshold levels
                end
            end
 
-          
            exact_range = range_intersection(angle_slice, range_1);
         
        end
@@ -198,24 +188,25 @@ for j=1:J                             % J threshold levels
 % Pick a function of interest to be evaluated over each interval
 % As an example, lets pick up mean
 
-evaluation(j, :) = first_moment(xx, nu, exact_range);
-
-
+exact_range = angle_slice;
 % Pick N points uniformly form the given exact_range
     for i=((j-1)*N+1):(j*N)
-        phi = simulate(exact_range);
-        xx_prop = xx*cos(phi) + nu*sin(phi); 
-        point = xx_prop + EP_mean;     
         
-        if ( (F*point' + g) < 0)
-           error('Bug detected')
-           
+        while true 
+            phi = simulate(exact_range);
+            xx_prop = xx*cos(phi) + nu*sin(phi);
+            cur_log_like = log_like_fn(xx_prop);
+            
+            if cur_log_like > hh
+                % New point is on slice, ** EXIT LOOP **
+                break;
+            end
+            
         end
         output(i, :) = xx_prop;
     end
     
 end 
 
-value = mean(evaluation);
 
 end

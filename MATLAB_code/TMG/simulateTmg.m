@@ -9,8 +9,8 @@ function [ mu, Sigma, chol_Sigma, C, lB, uB ] = simulateTmg( dimension, axis_int
        
        if dimension == 2
             Sigma = [1 0; 0 1];
-            lB = [x;-1]; 
-            uB = [x+1;1];
+            lB = [x;0]; 
+            uB = [x+1;2];
        else 
 %             Sigma = (1-lambda) *1 * eye(dimension) + lambda* iwishrnd(eye(dimension), inverse_wishart_df);
             Sigma = eye(dimension);
