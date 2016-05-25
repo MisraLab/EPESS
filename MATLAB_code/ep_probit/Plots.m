@@ -60,47 +60,86 @@ musk = [
 
 %% Plot
 
-% % Effective sample size
-% y_label = 'Effective Sample Size';
-% model_series = [ [breast_cancer(:,1)/breast_cancer(1,1)] , [ionoshere(:,1)/ionoshere(1,1)] , [sonar(:,1)/sonar(1,1)] , [musk(:,1)/musk(1,1)] ]';%[10 40 80; 20 50 90; 30 60 100];
-% model_error = [ [breast_cancer(:,2)/breast_cancer(1,1)] , [ionoshere(:,2)/ionoshere(1,1)] , [sonar(:,2)/sonar(1,1)] , [musk(:,2)/musk(1,1)] ]';%[1 4 8; 2 5 9; 3 6 10];
+y_labels = {'Eff. Samps / Fn evals', 'Effective Sample Size', 'Function evaluations'};
 
-% % Number of function evaluations
-% y_label = 'Function evaluations';
-% model_series = [ [breast_cancer(:,3)/breast_cancer(1,3)] , [ionoshere(:,3)/ionoshere(1,3)] , [sonar(:,3)/sonar(1,3)] , [musk(:,3)/musk(1,3)] ]';%[10 40 80; 20 50 90; 30 60 100];
-% model_error = [ [breast_cancer(:,4)/breast_cancer(1,3)] , [ionoshere(:,4)/ionoshere(1,3)] , [sonar(:,4)/sonar(1,3)] , [musk(:,4)/musk(1,3)] ]';%[1 4 8; 2 5 9; 3 6 10];
+for it_plot = 1:3
+
+    
+    width = 599; %700 for legend
+    height = 160;
+    
+    y_label = y_labels(it_plot)
+
+    if strcmp(y_label,'Effective Sample Size'); % Effective sample size
+        model_series = [ [breast_cancer(:,1)/breast_cancer(1,1)] , [ionoshere(:,1)/ionoshere(1,1)] , [sonar(:,1)/sonar(1,1)] , [musk(:,1)/musk(1,1)] ]';%[10 40 80; 20 50 90; 30 60 100];
+        model_error = [ [breast_cancer(:,2)/breast_cancer(1,1)] , [ionoshere(:,2)/ionoshere(1,1)] , [sonar(:,2)/sonar(1,1)] , [musk(:,2)/musk(1,1)] ]';%[1 4 8; 2 5 9; 3 6 10];
+
+    elseif strcmp(y_label,'Function evaluations'); % Number of function evaluations
+        model_series = [ [breast_cancer(:,3)/breast_cancer(1,3)] , [ionoshere(:,3)/ionoshere(1,3)] , [sonar(:,3)/sonar(1,3)] , [musk(:,3)/musk(1,3)] ]';%[10 40 80; 20 50 90; 30 60 100];
+        model_error = [ [breast_cancer(:,4)/breast_cancer(1,3)] , [ionoshere(:,4)/ionoshere(1,3)] , [sonar(:,4)/sonar(1,3)] , [musk(:,4)/musk(1,3)] ]';%[1 4 8; 2 5 9; 3 6 10];
+
+    else % Effective sample size over number of function evaluations.
+        width = 700;
+        model_series = [ [breast_cancer(:,5)/breast_cancer(1,5)] , [ionoshere(:,5)/ionoshere(1,5)] , [sonar(:,5)/sonar(1,5)] , [musk(:,5)/musk(1,5)] ]';%[10 40 80; 20 50 90; 30 60 100];
+        model_error = [ [breast_cancer(:,6)/breast_cancer(1,5)] , [ionoshere(:,6)/ionoshere(1,5)] , [sonar(:,6)/sonar(1,5)] , [musk(:,6)/musk(1,5)] ]';%[1 4 8; 2 5 9; 3 6 10];
+    end
+
+    select_algorithms = [1,2,3,4,10,11];
+    model_series = model_series(:,select_algorithms);
+    h = bar(model_series);
+    set(h,'BarWidth',1);    % The bars will now touch each other
+    set(gca,'YGrid','on')
+    set(gca,'GridLineStyle','-')
+    set(gca,'XTicklabel',{'Breast Cancer','Ionosphere','Sonar','Musk'})
+    set(get(gca,'YLabel'),'String',y_label)
+    set(gcf,'units','points','position',[0,0,width,height])
+    hold on;
+    numgroups = size(model_series, 1); 
+    numbars = size(model_series, 2); 
+    groupwidth = min(0.8, numbars/(numbars+1.5));
+    for i = 1:length(select_algorithms)
+
+          % Based on barweb.m by Bolu Ajiboye from MATLAB File Exchange
+          x = (1:numgroups) - groupwidth/2 + (2*i-1) * groupwidth / (2*numbars);  % Aligning error bar with individual bar
+          errorbar(x, model_series(:,i), model_error(:,i), 'k', 'linestyle', 'none');
+
+    end
+    h(5).FaceColor = 'red';
+    h(6).FaceColor = 'yellow';
+    ylim([0 min(4,1.3*max(max(max(model_series))))])
 
 
-% Effective sample size over number of function evaluations.
-y_label = 'Eff. Samps / Fn evals';
-model_series = [ [breast_cancer(:,5)/breast_cancer(1,5)] , [ionoshere(:,5)/ionoshere(1,5)] , [sonar(:,5)/sonar(1,5)] , [musk(:,5)/musk(1,5)] ]';%[10 40 80; 20 50 90; 30 60 100];
-model_error = [ [breast_cancer(:,6)/breast_cancer(1,5)] , [ionoshere(:,6)/ionoshere(1,5)] , [sonar(:,6)/sonar(1,5)] , [musk(:,6)/musk(1,5)] ]';%[1 4 8; 2 5 9; 3 6 10];
+    set(gcf, 'renderer', 'painters');
 
 
 
 
-
-h = bar(model_series);
-set(h,'BarWidth',1);    % The bars will now touch each other
-set(gca,'YGrid','on')
-set(gca,'GridLineStyle','-')
-set(gca,'XTicklabel',{'Breast Cancer','Ionosphere','Sonar','Musk'})
-set(get(gca,'YLabel'),'String',y_label)
-lh = legend('EPESS(1)','EPESS(2)','EPESS(5)','EPESS(10)','EPSS(1,1)','EPSS(5,5)','EPSS(10,5)','EPSS(5,10)','EPSS(10,10)','HMC','EPMH');
-%legend( sprintf( '%s\n%s', 'line1', 'line2' ) )
-set(gcf,'units','points','position',[10,10,700,200])
-set(lh,'Location','BestOutside','Orientation','vertical')
-hold on;
-numgroups = size(model_series, 1); 
-numbars = size(model_series, 2); 
-groupwidth = min(0.8, numbars/(numbars+1.5));
-for i = 1:numbars
-
-      % Based on barweb.m by Bolu Ajiboye from MATLAB File Exchange
-      x = (1:numgroups) - groupwidth/2 + (2*i-1) * groupwidth / (2*numbars);  % Aligning error bar with individual bar
-      errorbar(x, model_series(:,i), model_error(:,i), 'k', 'linestyle', 'none');
-
+    if strcmp(y_label,'Effective Sample Size'); % Effective sample size
+        print(gcf, '-dpdf', 'Effective_Sample_Size');
+    elseif strcmp(y_label,'Function evaluations'); % Number of function evaluations
+        print(gcf, '-dpdf', 'Function_Evaluations');
+    else % Effective sample size over number of function evaluations.
+        %lh = legend('EPESS(1)','EPESS(2)','EPESS(5)','EPESS(10)','EPSS(1,1)','EPSS(5,5)','EPSS(10,5)','EPSS(5,10)','EPSS(10,10)','HMC','EPMH');
+        lh = legend('EPESS(1)','EPESS(2)','EPESS(5)','EPESS(10)','EPMH','HMC');%,'Standard ESS'
+        set(lh,'Location','BestOutside','Orientation','vertical')
+        print(gcf, '-dpdf', 'Effective_Sample_Size_over_Function_Evaluation');
+    end
+    clf
 end
-ylim([0 min(4,1.3*max(max(max(model_series))))])
-[im_hatch,colorlist] = applyhatch_pluscolor(gcf,'\-x.');
+
+%[im_hatch,colorlist] = applyhatch_pluscolor(gcf,'\-x.');
+
+
+% set(gcf, 'PaperSize', [width*2 height*2]);
+% set(gcf, 'PaperPositionMode', 'manual');
+% set(gcf, 'PaperPosition', [0 0 width*2 height*2]);
+% 
+% set(gcf, 'renderer', 'painters');
+% print(gcf, '-dpdf', 'my-figure.pdf');
+
+
+% set(gcf, 'PaperUnits', 'inches');
+% set(gcf, 'PaperSize', [width height]);
+% set(gcf, 'PaperPositionMode', 'manual');
+% set(gcf, 'PaperPosition', [0 0 width height]);
 

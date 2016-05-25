@@ -4,7 +4,7 @@
 
 number_samples = 1000;
 number_chains = 1;
-number_examples = 100;
+number_examples = 1;
 frac_burnin = 0.1;
 rng(1)
 tic
@@ -25,7 +25,7 @@ dataset = 'bc';% bc, iono , pima , sonar , musk
 % 10: EPESS J=1, N=5
 % 11: EPESS J=1, N=10
 
-for algorithm_index = 9:9
+for algorithm_index = 1
     eff_vec = zeros(1,number_examples);
     number_fn_evaluations_vec = zeros(1,number_examples);
     for example_index = 1:number_examples

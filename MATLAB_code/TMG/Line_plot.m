@@ -42,7 +42,11 @@ boxd100s10 = [114.1189, 59.5151, 4040, 0, 0.028537, 0.014882;
 89.8926, 48.8117, 840, 0, 0.107019, 0.058109;
 1566.4721242 89.7448082 295062.61 314.4712701 0.0053089 0.0003038];
 
+    
 %% Plot dimension
+
+width = 595; %700 for legend
+height = 160;
 
 int_ess_1_s0 = [boxd2s0(1,5), boxd10s0(1,5),  boxd50s0(1,5),  boxd100s0(1,5)];
 int_ess_5_s0 = [boxd2s0(2,5), boxd10s0(2,5),  boxd50s0(2,5),  boxd100s0(2,5)];
@@ -55,18 +59,21 @@ std_exHMC_5_s0 = [boxd2s0(3,6), boxd10s0(3,6),  boxd50s0(3,6),  boxd100s0(3,6)];
 
 figure
 hold on
-errorbar([2,10,50,100],int_ess_1_s0./exHMC_5_s0,std_int_ess_1_s0./exHMC_5_s0,'-ok')
-errorbar([2,10,50,100],int_ess_5_s0./exHMC_5_s0,std_int_ess_5_s0./exHMC_5_s0,'-xk')
-errorbar([2,10,50,100],exHMC_5_s0./exHMC_5_s0,std_exHMC_5_s0./exHMC_5_s0,'-^k')
+errorbar([2,10,50,100],int_ess_5_s0./exHMC_5_s0,std_int_ess_5_s0./exHMC_5_s0,'-x','color',[0/255,170/255,191/255],'LineWidth',2)
+errorbar([2,10,50,100],int_ess_1_s0./exHMC_5_s0,std_int_ess_1_s0./exHMC_5_s0,'-o','color',[55/255,44/255,129/255],'LineWidth',2)
+errorbar([2,10,50,100],exHMC_5_s0./exHMC_5_s0,std_exHMC_5_s0./exHMC_5_s0,'-^','color','red','LineWidth',2)
 hold off
-set(gcf,'units','points','position',[10,10,700,200])
+set(gcf,'units','points','position',[0,0,width,height])
 ylabel('Eff. Samps / Fn evals')
 xlabel('Dimension')
-lh = legend('Int ESS(1)','Int ESS(5)','Exact HMC')
-set(lh,'Location','BestOutside','Orientation','vertical')
+%lh = legend('Int ESS(5)','Int ESS(1)','Exact HMC')
+%set(lh,'Location','BestOutside','Orientation','vertical')
 
-
+print(gcf, '-dpdf', 'Dimension');
+%clf
 %% Plot shift
+
+width = 690; %700 for legend
 
 int_ess_1_d2 = [boxd2s0(1,5), boxd2s5(1,5),  boxd2s25(1,5),  boxd2s125(1,5)];
 int_ess_5_d2 = [boxd2s0(2,5), boxd2s5(2,5),  boxd2s25(2,5),  boxd2s125(2,5)];
@@ -78,15 +85,18 @@ std_exHMC_5_d2 = [boxd2s0(3,6), boxd2s5(3,6),  boxd2s25(3,6),  boxd2s125(3,6)];
 
 figure
 hold on
-errorbar([0,5,25,125],int_ess_1_d2./exHMC_5_d2,std_int_ess_1_d2./exHMC_5_d2,'-ok')
-errorbar([0,5,25,125],int_ess_5_d2./exHMC_5_d2,std_int_ess_5_d2./exHMC_5_d2,'-xk')
-errorbar([0,5,25,125],exHMC_5_d2./exHMC_5_d2,std_exHMC_5_d2./exHMC_5_d2,'-^k')
+errorbar([0,5,25,125],int_ess_5_d2./exHMC_5_d2,std_int_ess_5_d2./exHMC_5_d2,'-x','color',[0/255,170/255,191/255],'LineWidth',2)
+errorbar([0,5,25,125],int_ess_1_d2./exHMC_5_d2,std_int_ess_1_d2./exHMC_5_d2,'-o','color',[55/255,44/255,129/255],'LineWidth',2)
+errorbar([0,5,25,125],exHMC_5_d2./exHMC_5_d2,std_exHMC_5_d2./exHMC_5_d2,'-^','color','red','LineWidth',2)
 hold off
-set(gcf,'units','points','position',[10,10,700,200])
+set(gcf,'units','points','position',[0,0,width,height])
 ylabel('Eff. Samps / Fn evals')
 xlabel('Shift')
-lh = legend('Int ESS(1)','Int ESS(5)','Exact HMC')
+lh = legend('Ana EPESS(5)','Ana EPESS(1)','Exact HMC')
 set(lh,'Location','BestOutside','Orientation','vertical')
 set(gca,'yscale','log')
 set(gca,'xscale','log')
 axis([0,130,0,1000])
+
+print(gcf, '-dpdf', 'Shift');
+clf
